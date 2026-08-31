@@ -70,6 +70,21 @@
   #tarotPanel.show{display:flex;}
   .tp-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;}
   .tp-controls select{background:rgba(20,12,40,.75);color:#e9deff;border:1px solid rgba(160,120,255,.4);border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;}
+  /* —— 自定义牌阵选择下拉（替代原生 select，保持神秘风格统一）—— */
+  .tp-select{position:relative;display:inline-block;}
+  .tp-select-btn{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:200px;background:linear-gradient(180deg,rgba(34,20,66,.92),rgba(18,10,38,.94));color:#ece4ff;border:1px solid rgba(180,150,255,.5);border-radius:24px;padding:9px 18px;cursor:pointer;font-size:14px;font-family:inherit;letter-spacing:.04em;transition:.25s;}
+  .tp-select-btn:hover{border-color:#cdb6ff;box-shadow:0 0 16px rgba(150,110,255,.45);}
+  .tp-select-caret{font-size:12px;color:#cdb6ff;transition:transform .25s;}
+  .tp-select.open .tp-select-caret{transform:rotate(180deg);}
+  .tp-select-menu{position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:30;background:linear-gradient(180deg,rgba(30,18,58,.98),rgba(15,9,32,.98));border:1px solid rgba(180,150,255,.45);border-radius:14px;padding:6px;display:none;flex-direction:column;gap:4px;box-shadow:0 14px 44px rgba(0,0,0,.55);max-height:52vh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(180,160,255,.32) transparent;}
+  .tp-select-menu::-webkit-scrollbar{width:8px;}
+  .tp-select-menu::-webkit-scrollbar-thumb{background:linear-gradient(rgba(150,120,255,.25),rgba(150,120,255,.4));border-radius:8px;border:2px solid transparent;background-clip:padding-box;}
+  .tp-select.open .tp-select-menu{display:flex;animation:menuIn .18s ease;}
+  @keyframes menuIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+  .tp-select-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:#d9cfff;font-size:14px;border:1px solid transparent;transition:.15s;}
+  .tp-select-item:hover{background:rgba(120,80,200,.25);}
+  .tp-select-item.sel{background:rgba(150,100,240,.32);border-color:rgba(200,160,255,.6);color:#fff;}
+  .tp-select-item .sz{font-size:12px;color:#b9aee0;white-space:nowrap;}
   .tp-btn{background:linear-gradient(180deg,rgba(120,80,200,.7),rgba(70,40,130,.7));color:#f3ecff;border:1px solid rgba(180,150,255,.6);border-radius:24px;padding:9px 22px;cursor:pointer;font-size:14px;letter-spacing:.1em;transition:.25s;}
   .tp-btn:hover{background:linear-gradient(180deg,rgba(150,100,240,.9),rgba(90,50,160,.9));}
   .tp-btn:disabled{opacity:.5;cursor:not-allowed;}
@@ -121,6 +136,34 @@
   .tp-out{color:#e7defb;font-size:14px;line-height:1.85;white-space:pre-wrap;min-height:40px;}
   .tp-out .err{color:#ff9a9a;}
   .tp-hint{color:#9a8fc8;font-size:12px;margin:2px 0 0;text-align:center;}
+
+  /* ===== 移动端适配：纵向整体可滚 + 牌阵横向滑动 ===== */
+  @media (max-width: 720px){
+    #funcpage{ justify-content:flex-start; overflow-y:auto; padding:14px 0 30px; -webkit-overflow-scrolling:touch; }
+    #tarotPanel{ width:100vw; max-height:none; height:auto; padding:10px 10px 18px; gap:12px; align-self:stretch; }
+    .tp-controls{ width:100%; gap:10px; }
+    .tp-info{ max-width:100%; padding:0 10px; font-size:12px; }
+    .tp-guide{ font-size:13px; padding:0 12px; }
+    .tp-ai{ width:94vw; }
+    /* 牌阵横向滑动（三张/五张并排也不溢出） */
+    #tarotBoard{ align-self:stretch; width:100%; max-width:100%; overflow-x:auto; overflow-y:hidden; justify-content:start;
+      padding:6px 2px 14px; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; border-radius:12px;
+      grid-template-columns: repeat(var(--ncols, 3), minmax(116px, 32vw)) !important; }
+    #tarotBoard .tcard{ width:auto; scroll-snap-align:center; }
+    .tcard .flipcard{ width:100%; height:auto; aspect-ratio:5/8; }
+    .tcard .pos{ font-size:11px; min-height:26px; }
+    .tcard .cname{ font-size:13px; }
+    .tcard .text{ font-size:11px; line-height:1.5; }
+    .tcard .meaning{ max-height:420px; }
+    /* 自定义下拉在手机上撑满 */
+    .tp-select{ flex:1 1 auto; }
+    .tp-select-btn{ width:100%; }
+  }
+  /* 窄屏（小手机）进一步压缩牌宽，保证可横向滑动 */
+  @media (max-width: 420px){
+    #tarotBoard{ grid-template-columns: repeat(var(--ncols, 3), minmax(104px, 38vw)) !important; }
+    .tp-select-btn{ min-width:0; }
+  }
 </style>
 </head>
 <body>
@@ -317,7 +360,14 @@
   <button class="back" id="fpBack">返回书架</button>
   <div id="tarotPanel">
     <div class="tp-controls">
-      <select id="tpSpread"></select>
+      <div class="tp-select" id="tpSelect">
+        <button class="tp-select-btn" id="tpSelectBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
+          <span class="tp-select-label" id="tpSelectLabel">选择牌阵</span>
+          <span class="tp-select-caret">▾</span>
+        </button>
+        <div class="tp-select-menu" id="tpSelectMenu" role="listbox"></div>
+      </div>
+      <select id="tpSpread" hidden></select>
       <button class="tp-btn" id="tpDraw">✦ 抽牌</button>
     </div>
     <div class="tp-info" id="tpInfo">选择牌阵后点击「抽牌」。</div>
@@ -904,6 +954,10 @@ const tpAi = document.getElementById('tpAi');
 const tpQuestion = document.getElementById('tpQuestion');
 const tpInterp = document.getElementById('tpInterp');
 const tpOut = document.getElementById('tpOut');
+const tpSelect = document.getElementById('tpSelect');
+const tpSelectBtn = document.getElementById('tpSelectBtn');
+const tpSelectMenu = document.getElementById('tpSelectMenu');
+const tpSelectLabel = document.getElementById('tpSelectLabel');
 
 // API 地址自适应：优先同源相对路径（Vercel / 本地 uvicorn 同源均可），
 // 失败再回退到常见本地开发端口。这样「双击 index.html」或静态预览时也能连上后端。
@@ -946,11 +1000,43 @@ async function initTarot(){
       const o = document.createElement('option');
       o.value = s.key; o.textContent = s.name + '（' + s.size + ' 张）';
       tpSpread.appendChild(o);
+      // 自定义下拉项
+      const it = document.createElement('div');
+      it.className = 'tp-select-item';
+      it.setAttribute('role','option');
+      it.dataset.key = s.key;
+      it.innerHTML = '<span class="nm">'+s.name+'</span><span class="sz">'+s.size+' 张</span>';
+      it.onclick = ()=> selectSpread(s.key);
+      tpSelectMenu.appendChild(it);
     });
     tpSpread.onchange = showSpreadInfo;
+    if(j.spreads.length) selectSpread(j.spreads[0].key);  // 默认选中首个牌阵
     showSpreadInfo();
-  }catch(e){ tpInfo.textContent = '加载牌阵列表失败：' + e.message + '（请确认后端已启动：uvicorn app:app --port 8000）'; }
+  }catch(e){ tpInfo.textContent = '加载牌阵列表失败：' + e.message; }
 }
+
+function selectSpread(key){
+  tpSpread.value = key;
+  const sel = [...tpSpread.options].find(o=>o.value===key);
+  if(sel) tpSelectLabel.textContent = sel.textContent;
+  [...tpSelectMenu.children].forEach(c=> c.classList.toggle('sel', c.dataset.key===key));
+  tpSelect.classList.remove('open');
+  tpSelectBtn.setAttribute('aria-expanded','false');
+  showSpreadInfo();
+}
+
+// 自定义下拉交互
+tpSelectBtn.addEventListener('click',(e)=>{
+  e.stopPropagation();
+  const open = tpSelect.classList.toggle('open');
+  tpSelectBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+});
+document.addEventListener('click',(e)=>{
+  if(!tpSelect.contains(e.target)){
+    tpSelect.classList.remove('open');
+    tpSelectBtn.setAttribute('aria-expanded','false');
+  }
+});
 
 async function showSpreadInfo(){
   const key = tpSpread.value;
@@ -986,6 +1072,7 @@ function renderBoard(reading){
   const key = reading.spread_key;
   const layout = SPREAD_LAYOUT[key] || reading.cards.map((_,i)=>[i]);
   const ncols = Math.max.apply(null, layout.map(r=>r.length));
+  tarotBoard.style.setProperty('--ncols', ncols);
   tarotBoard.style.gridTemplateColumns = 'repeat(' + ncols + ', 150px)';
   tarotState.cells = {};
   layout.forEach(row=>{
