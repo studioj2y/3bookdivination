@@ -1036,8 +1036,11 @@ async function initTarot(){
       tpSelectMenu.appendChild(it);
     });
     tpSpread.onchange = showSpreadInfo;
-    if(j.spreads.length) selectSpread(j.spreads[0].key);  // 默认选中首个牌阵
+    // 进入即默认「单张牌指引」并自动洗好 1 张待翻牌：代出全部元素，初始下拉菜单也正常显示
+    const defKey = (j.spreads.find(s=>s.key==='single') || j.spreads[0]).key;
+    selectSpread(defKey);
     showSpreadInfo();
+    tpDraw.click();
   }catch(e){ tpInfo.textContent = '加载牌阵列表失败：' + e.message; }
 }
 
@@ -1059,10 +1062,21 @@ function selectSpread(key){
 }
 
 // 自定义下拉交互
+// 菜单用 position:fixed 锚定到按钮，避免被 #tarotPanel 的 overflow-y:auto 裁切（初始状态面板较短时尤为明显）
+function positionSelectMenu(){
+  const r = tpSelectBtn.getBoundingClientRect();
+  tpSelectMenu.style.position = 'fixed';
+  tpSelectMenu.style.top = (r.bottom + 8) + 'px';
+  tpSelectMenu.style.left = r.left + 'px';
+  tpSelectMenu.style.right = 'auto';
+  tpSelectMenu.style.width = r.width + 'px';
+  tpSelectMenu.style.zIndex = '60';
+}
 tpSelectBtn.addEventListener('click',(e)=>{
   e.stopPropagation();
   const open = tpSelect.classList.toggle('open');
   tpSelectBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if(open) positionSelectMenu();
 });
 document.addEventListener('click',(e)=>{
   if(!tpSelect.contains(e.target)){
@@ -1070,6 +1084,9 @@ document.addEventListener('click',(e)=>{
     tpSelectBtn.setAttribute('aria-expanded','false');
   }
 });
+// 菜单打开时随页面滚动 / 窗口尺寸变化重新锚定
+window.addEventListener('scroll', ()=>{ if(tpSelect.classList.contains('open')) positionSelectMenu(); }, true);
+window.addEventListener('resize', ()=>{ if(tpSelect.classList.contains('open')) positionSelectMenu(); });
 
 async function showSpreadInfo(){
   const key = tpSpread.value;
@@ -1083,6 +1100,7 @@ async function showSpreadInfo(){
 
 tpDraw.onclick = async ()=>{
   tpInfo.textContent = '正在洗牌…';
+  tpGuide.textContent = '✦ 正在为你洗牌……';
   tarotBoard.innerHTML = '';
   tpAi.classList.remove('show');
   finaleActive = false; finaleDone = false;
@@ -1095,6 +1113,7 @@ tpDraw.onclick = async ()=>{
     const reading = await r.json();
     tarotState = { reading, revealed:0, total: reading.cards.length, next:0, cells:{} };
     renderBoard(reading);
+    activateNext();   // 同步引导语为「请翻开第 1 张」，避免残留「点击下方抽牌开始」
     tpInfo.textContent = '✦ 请按顺序翻牌（一次一张）· 共 ' + reading.cards.length + ' 张';
   }catch(e){ tpInfo.textContent = '抽牌失败：' + e.message; }
 };
