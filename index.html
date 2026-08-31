@@ -90,6 +90,30 @@
   .tp-btn:disabled{opacity:.5;cursor:not-allowed;}
   .tp-info{color:#b9aee0;font-size:13px;text-align:center;max-width:780px;line-height:1.7;min-height:20px;}
   #tarotBoard{display:grid;gap:14px;justify-content:center;margin-top:6px;}
+  /* ===== 进入态：居中「一沓牌」+ 环绕光粒子（神秘感） ===== */
+  .tp-pile{position:relative;width:100%;min-height:300px;display:flex;align-items:center;justify-content:center;margin-top:6px;}
+  .pile-glow{position:absolute;width:240px;height:240px;border-radius:50%;
+    background:radial-gradient(circle, rgba(160,110,255,.30), rgba(120,80,220,.10) 45%, transparent 72%);
+    filter:blur(6px);animation:pileBreathe 4.5s ease-in-out infinite;pointer-events:none;}
+  .pile-orbit{position:absolute;inset:0;margin:auto;border-radius:50%;border:1px solid rgba(190,160,255,.22);
+    box-shadow:0 0 18px rgba(150,100,255,.18) inset;pointer-events:none;}
+  .pile-orbit--a{width:200px;height:200px;animation:spin 9s linear infinite;}
+  .pile-orbit--b{width:272px;height:272px;border-style:dashed;border-color:rgba(200,170,255,.18);animation:spin 14s linear infinite reverse;}
+  .pile-orbit--c{width:332px;height:332px;border-color:rgba(180,150,255,.12);animation:spin 22s linear infinite;}
+  .pile-spark{position:absolute;top:-4px;left:50%;width:8px;height:8px;margin-left:-4px;border-radius:50%;
+    background:radial-gradient(circle,#fff,rgba(243,217,122,.6) 40%,transparent 70%);box-shadow:0 0 10px rgba(243,217,122,.8);}
+  .pile-orbit--b .pile-spark{background:radial-gradient(circle,#fff,rgba(185,145,255,.7) 40%,transparent 70%);box-shadow:0 0 10px rgba(185,145,255,.85);}
+  .pile-orbit--c .pile-spark{width:6px;height:6px;margin-left:-3px;}
+  .pile-deck{position:relative;width:120px;height:188px;}
+  .pile-card{position:absolute;inset:0;border-radius:12px;
+    background:radial-gradient(circle at 50% 28%, rgba(255,240,200,.18), transparent 40%),
+               linear-gradient(160deg,#43256f 0%,#2a1650 55%,#160a30 100%);
+    border:1px solid rgba(205,170,255,.55);
+    box-shadow:0 6px 18px rgba(0,0,0,.45), inset 0 0 14px rgba(150,100,255,.25);
+    transform:translate(calc(var(--i) * 5px - 12px), calc(var(--i) * -4px)) rotate(calc((var(--i) - 2.5) * 4deg));}
+  .pile-card::after{content:'✶';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:30px;color:rgba(235,215,255,.5);text-shadow:0 0 12px rgba(190,150,255,.6);}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes pileBreathe{0%,100%{transform:scale(1);opacity:.85;}50%{transform:scale(1.12);opacity:1;}}
   .tcard{width:152px;background:rgba(18,10,38,.85);border:1px solid rgba(150,120,255,.35);border-radius:14px;padding:9px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:.3s;}
   .tcard.flipped{box-shadow:0 0 22px rgba(150,110,255,.5);border-color:#b89bff;}
   .tcard .pos{color:#cdb6ff;font-size:12px;text-align:center;min-height:26px;line-height:1.3;}
@@ -173,6 +197,13 @@
       justify-content: safe center;
       grid-template-columns: repeat(var(--ncols, 3), minmax(144px, 36vw)) !important; }
     #tarotBoard .tcard{ width:auto; scroll-snap-align:center; }
+    /* 移动端：进入态牌堆缩放适配 */
+    .tp-pile{ min-height:260px; }
+    .pile-glow{ width:200px; height:200px; }
+    .pile-orbit--a{ width:172px; height:172px; }
+    .pile-orbit--b{ width:228px; height:228px; }
+    .pile-orbit--c{ width:280px; height:280px; }
+    .pile-deck{ width:104px; height:164px; }
     .tcard .cardwrap{ width:100%; }
     .tcard .flipcard{ width:100%; height:auto; aspect-ratio:5/8.4; }
     .tcard .pos{ font-size:11px; min-height:26px; }
@@ -399,6 +430,20 @@
     <div class="tp-info" id="tpInfo">选择牌阵后点击「抽牌」。</div>
     <div class="tp-guide" id="tpGuide"></div>
     <div id="tarotBoard"></div>
+    <div id="tpPile" class="tp-pile" aria-hidden="true">
+      <div class="pile-glow"></div>
+      <div class="pile-orbit pile-orbit--a"><span class="pile-spark"></span></div>
+      <div class="pile-orbit pile-orbit--b"><span class="pile-spark"></span></div>
+      <div class="pile-orbit pile-orbit--c"><span class="pile-spark"></span></div>
+      <div class="pile-deck">
+        <div class="pile-card" style="--i:5"></div>
+        <div class="pile-card" style="--i:4"></div>
+        <div class="pile-card" style="--i:3"></div>
+        <div class="pile-card" style="--i:2"></div>
+        <div class="pile-card" style="--i:1"></div>
+        <div class="pile-card" style="--i:0"></div>
+      </div>
+    </div>
     <div class="tp-ai" id="tpAi">
       <textarea id="tpQuestion" rows="2" placeholder="可输入你的问题，让解读更贴合（可选）"></textarea>
       <div class="row" style="text-align:center;">
@@ -952,6 +997,7 @@ function selectBook(idx){
     fpDesc.style.display = 'none';
     tarotPanel.classList.add('show');
     initTarot();
+    showPileState();
   } else {
     fpTitle.style.display = '';
     fpDesc.style.display = '';
@@ -983,6 +1029,7 @@ const tpOut = document.getElementById('tpOut');
 const tpSelect = document.getElementById('tpSelect');
 const tpSelectBtn = document.getElementById('tpSelectBtn');
 const tpSelectMenu = document.getElementById('tpSelectMenu');
+const tpPile = document.getElementById('tpPile');
 const tpSelectLabel = document.getElementById('tpSelectLabel');
 
 // API 地址自适应：优先同源相对路径（Vercel / 本地 uvicorn 同源均可），
@@ -1036,12 +1083,24 @@ async function initTarot(){
       tpSelectMenu.appendChild(it);
     });
     tpSpread.onchange = showSpreadInfo;
-    // 进入即默认「单张牌指引」并自动洗好 1 张待翻牌：代出全部元素，初始下拉菜单也正常显示
-    const defKey = (j.spreads.find(s=>s.key==='single') || j.spreads[0]).key;
-    selectSpread(defKey);
     showSpreadInfo();
-    tpDraw.click();
   }catch(e){ tpInfo.textContent = '加载牌阵列表失败：' + e.message; }
+}
+
+// 进入态：什么都不选中，居中显示一沓牌 + 环绕光粒子，营造神秘感
+function showPileState(){
+  tarotBoard.innerHTML = '';
+  tarotBoard.style.display = 'none';
+  tpPile.style.display = 'flex';
+  tarotState = { reading:null, revealed:0, total:0, next:0, cells:{} };
+  tpAi.classList.remove('show');
+  finaleActive = false; finaleDone = false;
+  tpOut.textContent = '';
+  tpSpread.value = '';
+  tpSelectLabel.textContent = '选择牌阵';
+  [...tpSelectMenu.children].forEach(c=> c.classList.remove('sel'));
+  tpGuide.innerHTML = '你终于找到这里了啊……<br><span style="opacity:.9;">那，请选择今天的牌阵吧！</span>';
+  tpInfo.textContent = '（从上方牌阵中选择一个，再点击「抽牌」开始）';
 }
 
 function selectSpread(key){
@@ -1051,13 +1110,15 @@ function selectSpread(key){
   [...tpSelectMenu.children].forEach(c=> c.classList.toggle('sel', c.dataset.key===key));
   tpSelect.classList.remove('open');
   tpSelectBtn.setAttribute('aria-expanded','false');
-  // 切换牌阵立即清空当前牌阵界面（无论已翻开 / 部分翻开 / 未翻开）
+  // 切换牌阵：回到「牌堆」待抽状态（无论已翻开 / 部分翻开 / 未翻开）
   tarotBoard.innerHTML = '';
+  tarotBoard.style.display = 'none';
+  tpPile.style.display = 'flex';
   tarotState = { reading:null, revealed:0, total:0, next:0, cells:{} };
   tpAi.classList.remove('show');
   finaleActive = false; finaleDone = false;
   tpOut.textContent = '';
-  tpGuide.textContent = '✦ 已选牌阵，点击下方「抽牌」开始。';
+  tpGuide.innerHTML = '✦ 已选【' + (sel ? sel.textContent : '牌阵') + '】，请点击下方「抽牌」开始。';
   showSpreadInfo();
 }
 
@@ -1099,6 +1160,7 @@ async function showSpreadInfo(){
 }
 
 tpDraw.onclick = async ()=>{
+  if(!tpSpread.value){ tpGuide.textContent = '请先从上方选择一个牌阵。'; return; }
   tpInfo.textContent = '正在洗牌…';
   tpGuide.textContent = '✦ 正在为你洗牌……';
   tarotBoard.innerHTML = '';
@@ -1121,6 +1183,8 @@ tpDraw.onclick = async ()=>{
 const tpGuide = document.getElementById('tpGuide');
 
 function renderBoard(reading){
+  tpPile.style.display = 'none';
+  tarotBoard.style.display = '';
   const key = reading.spread_key;
   const layout = SPREAD_LAYOUT[key] || reading.cards.map((_,i)=>[i]);
   const ncols = Math.max.apply(null, layout.map(r=>r.length));
