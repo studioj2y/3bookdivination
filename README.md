@@ -58,13 +58,44 @@ uvicorn api.app:app --port 8000
 
 ## 部署到 Vercel
 
-1. 把本目录推送到 GitHub 仓库。
-2. 在 Vercel 导入该仓库（默认配置即可，`vercel.json` 已就绪）。
-3. **环境变量（可选）**：`AGNES_API_KEY` —— 留空则回落到前端「自填 key」或内置默认 key。
-4. 部署完成后，站点根路径提供 `index.html`，`/api/*` 由 Serverless Function 处理。
+本项目采用 Vercel 官方 **`api/` 目录模式**，配置已就绪，无需手动写构建脚本。
 
-> 非 Vercel 环境下（本地），`app.py` 会自动接管 `/` 与 `/tarot_images` 的静态托管；
-> 在 Vercel 上则由平台静态托管接管，函数只处理 `/api/*`。
+### 导入时的配置项
+
+| 配置项 | 选择 | 说明 |
+| --- | --- | --- |
+| Framework Preset | **Other** | 让 Vercel 完全按仓库的 `vercel.json` 走，避免框架自动探测注入冲突命令 |
+| Root Directory | **`.`（仓库根目录）** | `api/`、`index.html`、`tarot_images/`、`vercel.json` 都在根，保持默认 |
+| Build Command | **留空** | 无需构建前端，`api/app.py` 由 Vercel 自动识别为 Python 函数 |
+| Install Command | **留默认** | Vercel 自动 `pip install -r requirements.txt`（fastapi/requests/certifi，纯 Python） |
+| Output Directory | **留空** | 静态文件由平台按根目录托管 |
+
+### 环境变量（可选）
+
+- **`AGNES_API_KEY`**：塔罗 AI 解读用的 agnes-ai key。**不填也能跑**，会回落到前端「自填 key」或代码内置的默认 key（已随仓库公开，有调用频率限制，建议自填专属 key 以获得稳定额度）。
+- **`VERCEL`**：无需设置，平台自动注入（代码据此判断是否走本地静态托管分支）。
+
+### 部署步骤
+
+1. 把本目录推送到 GitHub 仓库。
+2. 在 Vercel「New Project」导入该仓库，按上表确认配置（基本可一路默认）。
+3. 点击 Deploy，等待构建完成。
+4. 部署后：
+   - 站点根路径 `/` 提供 `index.html`（书/魔杖/塔罗界面）；
+   - `/api/*` 由 `api/app.py` 这个 Serverless Function 处理；
+   - `tarot_images/` 由平台静态托管，前端正常加载牌图。
+
+### 验证三处
+
+1. 首页 `https://你的域名/` 能正常加载（不再 404）。
+2. `https://你的域名/api/spreads` 浏览器直开返回 JSON 牌阵列表。
+3. 抽牌 → 逐张翻完 → 点「✦ AI 全盘解读」能出文字。
+
+> 非 Vercel 环境下（本地），`api/app.py` 通过 `VERCEL` 环境变量判断，自动接管 `/` 与 `/tarot_images` 的静态托管；
+> 在 Vercel 上该分支跳过，由平台静态托管接管，函数只处理 `/api/*`。
+
+> 历史上曾因 `vercel.json` 中使用旧的 `builds` + 仅匹配 `/api/*` 的写法，导致根目录 `index.html` 未被托管而 404 / No Production Deployment；
+> 现改为 `api/` 目录模式（`builds` 警告也随之消失），该问题已解决。
 
 ## API 说明
 
