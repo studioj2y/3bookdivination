@@ -111,16 +111,31 @@
   .tcard.shake{animation:shake .42s;}
   .tp-guide{color:#f0dca0;font-size:14px;text-align:center;min-height:22px;letter-spacing:.04em;text-shadow:0 0 10px rgba(243,217,122,.35);}
   /* —— 牌面 3D 翻转 —— */
-  .flipcard{position:relative;width:152px;height:238px;margin-top:4px;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.2,.8,.2,1);}
+  .flipcard{position:relative;width:152px;height:238px;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.2,.8,.2,1);}
   .tcard.flipped .flipcard{transform:rotateY(180deg);}
   .flipcard .f-front,.flipcard .f-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:10px;overflow:hidden;}
   .flipcard .f-front{background:radial-gradient(circle at 50% 38%, #3a2668, #1a0f33);border:1px solid rgba(150,120,255,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
   .flipcard .f-front::after{content:'✶';position:absolute;top:8px;font-size:30px;color:rgba(206,182,255,.35);}
   .flipcard .f-back{transform:rotateY(180deg);border:1px solid rgba(150,120,255,.4);background:#0c0820;}
-  .meaning{max-height:0;opacity:0;overflow:hidden;transform:translateY(8px);transition:max-height .5s ease,opacity .5s ease,transform .5s ease;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  /* 释义面板：从卡面中段滑入、覆盖下半部 */
+  .cardwrap{position:relative;display:inline-block;margin-top:4px;}
+  .mpanel{position:absolute;left:0;right:0;bottom:0;height:52%;
+    transform:translateY(108%);opacity:0;pointer-events:none;
+    display:flex;flex-direction:column;gap:6px;padding:10px 9px 12px;
+    background:linear-gradient(180deg, rgba(48,20,82,.60), rgba(20,8,42,.92));
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+    border:1px solid rgba(185,145,255,.5);border-top:1px solid rgba(205,165,255,.8);
+    border-radius:0 0 10px 10px;
+    box-shadow:0 0 26px rgba(150,90,255,.55), inset 0 0 20px rgba(150,90,255,.22);
+    transition:transform .5s cubic-bezier(.2,.8,.2,1), opacity .45s ease;
+    overflow:hidden;}
+  .tcard.flipped.show-meaning .mpanel{transform:translateY(0);opacity:1;pointer-events:auto;}
+  .mpanel .text{color:#ece2ff;font-size:12px;line-height:1.6;text-align:center;
+    overflow-y:auto;flex:1 1 auto;padding:0 2px;text-shadow:0 0 7px rgba(120,80,210,.7);}
+  .mpanel .text::-webkit-scrollbar{width:5px;}
+  .mpanel .text::-webkit-scrollbar-thumb{background:rgba(180,140,255,.5);border-radius:5px;}
   .mhead{display:flex;flex-direction:column;align-items:center;gap:4px;max-height:0;opacity:0;overflow:hidden;transform:translateY(6px);transition:max-height .5s ease,opacity .5s ease,transform .5s ease;}
   .tcard.flipped .mhead{max-height:96px;opacity:1;transform:none;}
-  .tcard.flipped .meaning{max-height:460px;opacity:1;transform:none;}
   /* —— 翻牌粒子 / 光环 —— */
   .spark{position:absolute;left:50%;top:42%;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:5;animation:particleFly .9s ease-out forwards;}
   @keyframes particleFly{0%{opacity:0;transform:translate(-50%,-50%) scale(.2);}15%{opacity:1;}100%{opacity:0;transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty))) scale(1);}}
@@ -158,13 +173,14 @@
       justify-content: safe center;
       grid-template-columns: repeat(var(--ncols, 3), minmax(144px, 36vw)) !important; }
     #tarotBoard .tcard{ width:auto; scroll-snap-align:center; }
+    .tcard .cardwrap{ width:100%; }
     .tcard .flipcard{ width:100%; height:auto; aspect-ratio:5/8.4; }
     .tcard .pos{ font-size:11px; min-height:26px; }
     .tcard .cname{ font-size:13px; }
     .tcard .text{ font-size:12px; line-height:1.55; }
     /* 移动端：翻牌后默认收起释义，点击卡牌才展开，避免长文撑爆视口、也解决"说明显示不全" */
-    #tarotBoard .tcard.flipped .meaning{ max-height:0; opacity:0; transform:translateY(8px); }
-    #tarotBoard .tcard.flipped.show-meaning .meaning{ max-height:520px; opacity:1; transform:none; }
+    #tarotBoard .tcard.flipped .mpanel{ transform:translateY(108%); opacity:0; pointer-events:none; }
+    #tarotBoard .tcard.flipped.show-meaning .mpanel{ transform:translateY(0); opacity:1; pointer-events:auto; }
     /* 自定义下拉在手机上撑满 */
     .tp-select{ flex:1 1 auto; }
     .tp-select-btn{ width:100%; }
@@ -1103,15 +1119,17 @@ function renderBoard(reading){
       cell.dataset.idx = idx;
       cell.innerHTML =
         '<div class="pos">'+item.position+'</div>' +
-        '<div class="flipcard">' +
-          '<div class="f-front"><div class="ph">未翻开</div><button class="flipbtn">翻开</button></div>' +
-          '<div class="f-back"><img src="'+(apiBaseUsed||'')+c.img+'" onerror="this.onerror=null;this.src=\''+c.img_remote+'\'" alt="'+c.name_cn+'"/></div>' +
+        '<div class="cardwrap">' +
+          '<div class="flipcard">' +
+            '<div class="f-front"><div class="ph">未翻开</div><button class="flipbtn">翻开</button></div>' +
+            '<div class="f-back"><img src="'+(apiBaseUsed||'')+c.img+'" onerror="this.onerror=null;this.src=\''+c.img_remote+'\'" alt="'+c.name_cn+'"/></div>' +
+          '</div>' +
+          '<div class="mpanel"><div class="text">'+long+'</div></div>' +
         '</div>' +
         '<div class="mhead">' +
           '<div class="cname">'+c.name_cn+'</div>' +
           '<div class="orient '+(item.reversed?'rev':'up')+'">'+(item.reversed?'逆位':'正位')+'</div>' +
-        '</div>' +
-        '<div class="meaning"><div class="text">'+long+'</div></div>';
+        '</div>';
       cell.querySelector('.flipbtn').onclick = (e)=>{ e.stopPropagation(); tryFlip(cell, idx); };
       cell.onclick = ()=>{
         if(cell.classList.contains('flipped')){ cell.classList.toggle('show-meaning'); return; }  // 已翻开：点击切换释义显隐
@@ -1135,11 +1153,11 @@ function activateNext(){
     else { cell.classList.add('locked'); cell.classList.remove('active'); }
   }
   if(t.next >= t.total){
-    tpGuide.innerHTML = '✦ 牌阵已就位，请静心体会每张牌的启示，再请星灵为你解读。<br><span style="opacity:.7;font-size:12px;">（轻触已翻开的牌，可显现/收起其释义）</span>';
+    tpGuide.innerHTML = '✦ 牌阵已就位，请静心体会每张牌的启示，再请星灵为你解读。<br><span style="opacity:.85;font-size:12.5px;">· 点击已翻开的牌以显示其含义（再次轻触可收起）·</span>';
     return;
   }
   const item = t.reading.cards[t.next];
-  tpGuide.innerHTML = '✦ 请翻开第 ' + (t.next+1) + ' 张 · 代表【' + item.position + '】';
+  tpGuide.innerHTML = '✦ 请翻开第 ' + (t.next+1) + ' 张 · 代表【' + item.position + '】<br><span style="opacity:.7;font-size:12px;">（已翻开的牌：轻触可显现 / 收起其释义）</span>';
 }
 
 function hintOrder(){
@@ -1167,7 +1185,7 @@ function flipCard(cell, idx){
   t.next++;
   tpInfo.textContent = '已翻开 ' + t.revealed + ' / ' + t.total + ' 张';
   if(t.next >= t.total){
-    tpGuide.innerHTML = '✦ 牌阵汇聚，正在显现……';
+    tpGuide.innerHTML = '✦ 牌阵汇聚，正在显现……<br><span style="opacity:.8;font-size:12.5px;">轻触已翻开的牌以显示其含义</span>';
     startFinale();
   } else {
     activateNext();
