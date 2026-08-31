@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "app.py", "use": "@vercel/python" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "app.py" },
+    { "src": "/(.*)", "dest": "/" }
+  ],
+  "functions": {
+    "app.py": {
+      "includeFiles": ["tarot.py", "tarot_ai.py", "tarot_images/**"]
+    }
+  }
+}

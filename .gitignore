@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env
+
+# 本地开发 / 临时
+_served.html
+_chk.js
+served_check.html
+
+# 非发布素材（原型与交接文档不进仓库）
+crystal-app-prototype.html
+EXPORT_README.txt
+PROJECT_GUIDE.md
+archive/
