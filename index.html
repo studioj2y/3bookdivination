@@ -90,7 +90,7 @@
   .tp-btn:disabled{opacity:.5;cursor:not-allowed;}
   .tp-info{color:#b9aee0;font-size:13px;text-align:center;max-width:780px;line-height:1.7;min-height:20px;}
   #tarotBoard{display:grid;gap:14px;justify-content:center;margin-top:6px;}
-  .tcard{width:150px;min-height:300px;background:rgba(18,10,38,.85);border:1px solid rgba(150,120,255,.35);border-radius:14px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px;transition:.3s;}
+  .tcard{width:182px;min-height:332px;background:rgba(18,10,38,.85);border:1px solid rgba(150,120,255,.35);border-radius:14px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px;transition:.3s;}
   .tcard.flipped{box-shadow:0 0 22px rgba(150,110,255,.5);border-color:#b89bff;}
   .tcard .pos{color:#cdb6ff;font-size:12px;text-align:center;min-height:30px;line-height:1.35;}
   .flipcard .f-back img{width:100%;height:100%;object-fit:cover;display:block;}
@@ -111,13 +111,15 @@
   .tcard.shake{animation:shake .42s;}
   .tp-guide{color:#f0dca0;font-size:14px;text-align:center;min-height:22px;letter-spacing:.04em;text-shadow:0 0 10px rgba(243,217,122,.35);}
   /* —— 牌面 3D 翻转 —— */
-  .flipcard{position:relative;width:128px;height:200px;margin-top:4px;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.2,.8,.2,1);}
+  .flipcard{position:relative;width:152px;height:238px;margin-top:4px;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.2,.8,.2,1);}
   .tcard.flipped .flipcard{transform:rotateY(180deg);}
   .flipcard .f-front,.flipcard .f-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:10px;overflow:hidden;}
   .flipcard .f-front{background:radial-gradient(circle at 50% 38%, #3a2668, #1a0f33);border:1px solid rgba(150,120,255,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
   .flipcard .f-front::after{content:'✶';position:absolute;top:8px;font-size:30px;color:rgba(206,182,255,.35);}
   .flipcard .f-back{transform:rotateY(180deg);border:1px solid rgba(150,120,255,.4);background:#0c0820;}
   .meaning{max-height:0;opacity:0;overflow:hidden;transform:translateY(8px);transition:max-height .5s ease,opacity .5s ease,transform .5s ease;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .mhead{display:flex;flex-direction:column;align-items:center;gap:4px;max-height:0;opacity:0;overflow:hidden;transform:translateY(6px);transition:max-height .5s ease,opacity .5s ease,transform .5s ease;}
+  .tcard.flipped .mhead{max-height:96px;opacity:1;transform:none;}
   .tcard.flipped .meaning{max-height:460px;opacity:1;transform:none;}
   /* —— 翻牌粒子 / 光环 —— */
   .spark{position:absolute;left:50%;top:42%;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:5;animation:particleFly .9s ease-out forwards;}
@@ -145,7 +147,7 @@
     #tarotPanel{ width:100vw; max-height:none; height:auto; overflow:visible; padding:10px 10px 18px; gap:12px; align-self:stretch; flex-shrink:0; }
     .tp-controls{ width:100%; gap:10px; }
     .tp-info{ max-width:100%; padding:0 10px; font-size:12px; }
-    .tp-guide{ font-size:13px; padding:0 12px; }
+    .tp-guide{ font-size:13px; padding:8px 12px; position:sticky; top:0; z-index:6; margin:0 -10px 6px; background:linear-gradient(180deg, rgba(13,8,28,.96) 55%, rgba(13,8,28,0)); backdrop-filter:blur(2px); }
     .tp-ai{ width:94vw; }
     /* 牌阵：自身作为可双向自由滚动的视口，整片排阵（含纵向排列）都能拖到 */
     #tarotBoard{ align-self:stretch; width:100%; max-width:100%;
@@ -153,13 +155,13 @@
       touch-action:pan-x pan-y;
       max-height:74vh;
       padding:6px 4px 14px;
-      justify-content:start;
-      grid-template-columns: repeat(var(--ncols, 3), minmax(116px, 32vw)) !important; }
+      justify-content: safe center;
+      grid-template-columns: repeat(var(--ncols, 3), minmax(144px, 36vw)) !important; }
     #tarotBoard .tcard{ width:auto; scroll-snap-align:center; }
-    .tcard .flipcard{ width:100%; height:auto; aspect-ratio:5/8; }
+    .tcard .flipcard{ width:100%; height:auto; aspect-ratio:5/8.4; }
     .tcard .pos{ font-size:11px; min-height:26px; }
     .tcard .cname{ font-size:13px; }
-    .tcard .text{ font-size:11px; line-height:1.5; }
+    .tcard .text{ font-size:12px; line-height:1.55; }
     /* 移动端：翻牌后默认收起释义，点击卡牌才展开，避免长文撑爆视口、也解决"说明显示不全" */
     #tarotBoard .tcard.flipped .meaning{ max-height:0; opacity:0; transform:translateY(8px); }
     #tarotBoard .tcard.flipped.show-meaning .meaning{ max-height:520px; opacity:1; transform:none; }
@@ -169,7 +171,7 @@
   }
   /* 窄屏（小手机）进一步压缩牌宽，保证可横向滑动 */
   @media (max-width: 420px){
-    #tarotBoard{ grid-template-columns: repeat(var(--ncols, 3), minmax(104px, 38vw)) !important; }
+    #tarotBoard{ grid-template-columns: repeat(var(--ncols, 3), minmax(132px, 40vw)) !important; }
     .tp-select-btn{ min-width:0; }
   }
 </style>
@@ -384,7 +386,7 @@
     <div class="tp-ai" id="tpAi">
       <textarea id="tpQuestion" rows="2" placeholder="可输入你的问题，让解读更贴合（可选）"></textarea>
       <div class="row" style="text-align:center;">
-        <button class="tp-btn" id="tpInterp">✦ 全盘解读</button>
+        <button class="tp-btn" id="tpInterp">✦ 星灵解读</button>
       </div>
       <div class="tp-out" id="tpOut"></div>
     </div>
@@ -917,7 +919,7 @@ const NAMES = ['八字','占星','塔罗'];
 const DESCS = [
   '八字排盘（开发中）。',
   '占星（开发中）。',
-  '塔罗牌阵 · 选择牌阵，逐张翻开，可获全盘解读。'
+  '塔罗牌阵 · 选择牌阵，逐张翻开，可获星灵解读。'
 ];
 let booksShown = false;
 function showBooks(){
@@ -1030,6 +1032,13 @@ function selectSpread(key){
   [...tpSelectMenu.children].forEach(c=> c.classList.toggle('sel', c.dataset.key===key));
   tpSelect.classList.remove('open');
   tpSelectBtn.setAttribute('aria-expanded','false');
+  // 切换牌阵立即清空当前牌阵界面（无论已翻开 / 部分翻开 / 未翻开）
+  tarotBoard.innerHTML = '';
+  tarotState = { reading:null, revealed:0, total:0, next:0, cells:{} };
+  tpAi.classList.remove('show');
+  finaleActive = false; finaleDone = false;
+  tpOut.textContent = '';
+  tpGuide.textContent = '✦ 已选牌阵，点击下方「抽牌」开始。';
   showSpreadInfo();
 }
 
@@ -1098,11 +1107,11 @@ function renderBoard(reading){
           '<div class="f-front"><div class="ph">未翻开</div><button class="flipbtn">翻开</button></div>' +
           '<div class="f-back"><img src="'+(apiBaseUsed||'')+c.img+'" onerror="this.onerror=null;this.src=\''+c.img_remote+'\'" alt="'+c.name_cn+'"/></div>' +
         '</div>' +
-        '<div class="meaning">' +
+        '<div class="mhead">' +
           '<div class="cname">'+c.name_cn+'</div>' +
           '<div class="orient '+(item.reversed?'rev':'up')+'">'+(item.reversed?'逆位':'正位')+'</div>' +
-          '<div class="text">'+long+'</div>' +
-        '</div>';
+        '</div>' +
+        '<div class="meaning"><div class="text">'+long+'</div></div>';
       cell.querySelector('.flipbtn').onclick = (e)=>{ e.stopPropagation(); tryFlip(cell, idx); };
       cell.onclick = ()=>{
         if(cell.classList.contains('flipped')){ cell.classList.toggle('show-meaning'); return; }  // 已翻开：点击切换释义显隐
