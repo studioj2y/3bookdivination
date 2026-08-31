@@ -1082,8 +1082,8 @@ async function initTarot(){
       it.onclick = ()=> selectSpread(s.key);
       tpSelectMenu.appendChild(it);
     });
+    tpSpread.value = '';            // 进入态：不预选任何牌阵，避免显示首个牌阵的释义
     tpSpread.onchange = showSpreadInfo;
-    showSpreadInfo();
   }catch(e){ tpInfo.textContent = '加载牌阵列表失败：' + e.message; }
 }
 
