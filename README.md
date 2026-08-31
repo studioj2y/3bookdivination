@@ -27,14 +27,17 @@
 ## 目录结构
 
 ```
-app.py                FastAPI 入口（/api/spreads、/api/tarot_spread、/api/tarot_interpret）
-tarot.py              牌库与牌阵逻辑（纯标准库）
-tarot_ai.py          AI 解读（agnes-ai，key 透传）
+api/
+  app.py             FastAPI 入口（/api/spreads、/api/tarot_spread、/api/tarot_interpret）
+  tarot.py           牌库与牌阵逻辑（纯标准库）
+  tarot_ai.py        AI 解读（agnes-ai，key 透传）
 index.html            前端单文件（含全部样式与脚本）
 tarot_images/         78 张塔罗牌图
 requirements.txt      依赖
-vercel.json          Vercel 部署配置
+vercel.json          Vercel 部署配置（/api/* rewrite 到 api/app.py）
 ```
+
+> Vercel 采用官方 `api/` 目录模式：`api/app.py` 被平台自动识别为 Python Serverless Function；`index.html` 与 `tarot_images/` 留在根目录由平台静态托管。
 
 ## 本地运行
 
@@ -45,13 +48,13 @@ vercel.json          Vercel 部署配置
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-# 一条命令同时托管页面、牌图与 API
-uvicorn app:app --port 8000
+# 一条命令同时托管页面、牌图与 API（注意模块路径为 api.app）
+uvicorn api.app:app --port 8000
 ```
 
 然后浏览器打开 **http://127.0.0.1:8000**（不要用双击 `index.html`，否则图片走 file:// 协议）。
 
-> 若 `uvicorn` 不在 PATH，用 `python -m uvicorn app:app --port 8000`。
+> 若 `uvicorn` 不在 PATH，用 `python -m uvicorn api.app:app --port 8000`。
 
 ## 部署到 Vercel
 
