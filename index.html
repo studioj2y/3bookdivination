@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no"/>
-<title>超级银河自动算命机高级版II型AI强化式样</title>
+<title>超级银河自动算命机高级版II型强化式样</title>
 <style>
   html,body{margin:0;height:100%;background:#000;overflow:hidden;
     font-family:-apple-system,system-ui,"PingFang SC","Microsoft YaHei",sans-serif;}
@@ -118,7 +118,6 @@
   .tp-ai.show{display:flex;}
   .tp-ai textarea{width:100%;background:rgba(10,6,24,.8);color:#e9deff;border:1px solid rgba(160,120,255,.35);border-radius:10px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;}
   .tp-ai input[type=text]{width:100%;background:rgba(10,6,24,.8);color:#e9deff;border:1px solid rgba(160,120,255,.35);border-radius:10px;padding:8px 10px;font-size:13px;font-family:inherit;}
-  .tp-key-toggle{color:#a99bd6;font-size:12px;cursor:pointer;text-decoration:underline;}
   .tp-out{color:#e7defb;font-size:14px;line-height:1.85;white-space:pre-wrap;min-height:40px;}
   .tp-out .err{color:#ff9a9a;}
   .tp-hint{color:#9a8fc8;font-size:12px;margin:2px 0 0;text-align:center;}
@@ -325,11 +324,9 @@
     <div class="tp-guide" id="tpGuide"></div>
     <div id="tarotBoard"></div>
     <div class="tp-ai" id="tpAi">
-      <span class="tp-key-toggle" id="tpKeyToggle">填入我的 API Key（可选）</span>
-      <input type="text" id="tpKey" placeholder="agnes-ai key，留空则用默认公共 key" style="display:none"/>
       <textarea id="tpQuestion" rows="2" placeholder="可输入你的问题，让解读更贴合（可选）"></textarea>
       <div class="row" style="text-align:center;">
-        <button class="tp-btn" id="tpInterp">✦ AI 全盘解读</button>
+        <button class="tp-btn" id="tpInterp">✦ 全盘解读</button>
       </div>
       <div class="tp-out" id="tpOut"></div>
     </div>
@@ -862,7 +859,7 @@ const NAMES = ['八字','占星','塔罗'];
 const DESCS = [
   '八字排盘（开发中）。',
   '占星（开发中）。',
-  '塔罗牌阵 · 选择牌阵，逐张翻开，可请 AI 做全盘解读。'
+  '塔罗牌阵 · 选择牌阵，逐张翻开，可获全盘解读。'
 ];
 let booksShown = false;
 function showBooks(){
@@ -904,8 +901,6 @@ const tpDraw = document.getElementById('tpDraw');
 const tpInfo = document.getElementById('tpInfo');
 const tarotBoard = document.getElementById('tarotBoard');
 const tpAi = document.getElementById('tpAi');
-const tpKeyToggle = document.getElementById('tpKeyToggle');
-const tpKey = document.getElementById('tpKey');
 const tpQuestion = document.getElementById('tpQuestion');
 const tpInterp = document.getElementById('tpInterp');
 const tpOut = document.getElementById('tpOut');
@@ -1032,7 +1027,7 @@ function activateNext(){
     else { cell.classList.add('locked'); cell.classList.remove('active'); }
   }
   if(t.next >= t.total){
-    tpGuide.textContent = '✦ 牌阵已就位，请静心体会每张牌的启示，再请 AI 为你解读。';
+    tpGuide.textContent = '✦ 牌阵已就位，请静心体会每张牌的启示，再请星灵为你解读。';
     return;
   }
   const item = t.reading.cards[t.next];
@@ -1178,11 +1173,11 @@ function drawFinale(now){
       fxctx.beginPath(); fxctx.arc(p.x,p.y,rr,0,Math.PI*2); fxctx.fill();
     }
   }
-  // 终章完成：卡片呼吸光 + 显示 AI 解读按钮（用户再开始下一步）
+  // 终章完成：卡片呼吸光 + 显示解读按钮（用户再开始下一步）
   if (!finaleDone && t > 1500){
     finaleDone = true;
     tarotBoard.querySelectorAll('.tcard.flipped').forEach(c=>c.classList.add('breathing'));
-    tpGuide.innerHTML = '✦ 牌阵已就位，请静心体会每张牌的启示，再请 AI 为你解读。';
+    tpGuide.innerHTML = '✦ 牌阵已就位，请静心体会每张牌的启示，再请星灵为你解读。';
     tpAi.classList.add('show');
   }
   // 兜底：极端情况下若动画未触发，10s 后也显示
@@ -1194,18 +1189,14 @@ function drawFinale(now){
   fxctx.globalCompositeOperation = 'source-over';
 }
 
-tpKeyToggle.onclick = ()=>{
-  tpKey.style.display = (tpKey.style.display === 'none') ? 'block' : 'none';
-};
-
 tpInterp.onclick = async ()=>{
   if(!tarotState.reading) return;
-  tpOut.textContent = 'AI 解读中…';
+  tpOut.textContent = '解读中…';
   tpInterp.disabled = true;
   try{
     const r = await apiFetch('/api/tarot_interpret', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({reading: tarotState.reading, user_question: tpQuestion.value, api_key: tpKey.value})
+      body: JSON.stringify({reading: tarotState.reading, user_question: tpQuestion.value})
     });
     const j = await r.json();
     if(j.error){ tpOut.innerHTML = '<span class="err">解读失败：' + j.error + '</span>'; }

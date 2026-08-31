@@ -16,7 +16,7 @@
   - 按牌阵实际位置摆放，逐张点击「翻开」，有顺序引导与仪式感。
   - 翻牌 3D 翻转动效 + 粒子环绕；全部翻完后播放中心爆炸 + 闪白 + 全屏光粒子终章。
   - 可选填写自己的问题，获得更个性化的解读。
-  - AI 全盘解读（agnes-ai），限 ≤400 字叙事式解读。
+  - 全盘解读（叙事式），限 ≤400 字。
 
 ## 技术栈
 
@@ -72,7 +72,7 @@ uvicorn api.app:app --port 8000
 
 ### 环境变量（可选）
 
-- **`AGNES_API_KEY`**：塔罗 AI 解读用的 agnes-ai key。**不填也能跑**，会回落到前端「自填 key」或代码内置的默认 key（已随仓库公开，有调用频率限制，建议自填专属 key 以获得稳定额度）。
+- **`AGNES_API_KEY`**：塔罗解读用的 agnes-ai key。**不填也能跑**，会回落到代码内置的默认 key（已随仓库公开，有调用频率限制，建议自填专属 key 以获得稳定额度）。前端不再提供 key 输入入口。
 - **`VERCEL`**：无需设置，平台自动注入（代码据此判断是否走本地静态托管分支）。
 
 ### 部署步骤
@@ -105,7 +105,7 @@ uvicorn api.app:app --port 8000
 | POST | `/api/tarot_spread` | 请求体 `{spread_key, allow_reversed}` → 返回抽牌结果 |
 | POST | `/api/tarot_interpret` | 请求体 `{reading, user_question?, api_key?}` → 返回 AI 解读 |
 
-AI key 透传优先级：请求体 `api_key` → 请求头 `X-Agnes-Key` → 服务端环境变量 `AGNES_API_KEY`。
+解读 key 优先级（服务端）：请求头 `X-Agnes-Key` → 服务端环境变量 `AGNES_API_KEY` → 内置默认 key。前端不再发送 `api_key`。
 
 ## 后续计划
 
