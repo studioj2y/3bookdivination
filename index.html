@@ -1215,6 +1215,17 @@ function spawnParticles(cell, idx){
   setTimeout(()=>ring.remove(), 800);
 }
 
+// 所有牌翻开后，将外框滚动到底部，确保解读按钮与对话框可见
+// 移动端牌阵自身是独立滚动视口（74vh + overflow:auto），仅拖牌阵无法触达外框底部的按钮，故终章后自动拉到最下
+function revealTarotControls(){
+  const fp = document.getElementById('funcpage');
+  if(!fp) return;
+  requestAnimationFrame(()=>{
+    try { fp.scrollTo({ top: fp.scrollHeight, behavior:'smooth' }); }
+    catch(e){ fp.scrollTop = fp.scrollHeight; }
+  });
+}
+
 // ===== 终章特效：最后一牌翻开时的全屏粒子爆炸 + 中心闪白 + 环境光粒子 =====
 let finaleActive = false, finaleStart = 0, finaleDone = false;
 let finaleBurst = [], finaleAmbient = [];
@@ -1305,12 +1316,14 @@ function drawFinale(now){
     tarotBoard.querySelectorAll('.tcard.flipped').forEach(c=>c.classList.add('breathing'));
     tpGuide.innerHTML = '✦ 牌阵已就位，请静心体会每张牌的启示，再请星灵为你解读。';
     tpAi.classList.add('show');
+    revealTarotControls();
   }
   // 兜底：极端情况下若动画未触发，10s 后也显示
   if (!finaleDone && t > 10000){
     finaleDone = true;
     tarotBoard.querySelectorAll('.tcard.flipped').forEach(c=>c.classList.add('breathing'));
     tpAi.classList.add('show');
+    revealTarotControls();
   }
   fxctx.globalCompositeOperation = 'source-over';
 }
