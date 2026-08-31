@@ -153,13 +153,16 @@
       touch-action:pan-x pan-y;
       max-height:74vh;
       padding:6px 4px 14px;
+      justify-content:start;
       grid-template-columns: repeat(var(--ncols, 3), minmax(116px, 32vw)) !important; }
     #tarotBoard .tcard{ width:auto; scroll-snap-align:center; }
     .tcard .flipcard{ width:100%; height:auto; aspect-ratio:5/8; }
     .tcard .pos{ font-size:11px; min-height:26px; }
     .tcard .cname{ font-size:13px; }
     .tcard .text{ font-size:11px; line-height:1.5; }
-    .tcard .meaning{ max-height:420px; }
+    /* 移动端：翻牌后默认收起释义，点击卡牌才展开，避免长文撑爆视口、也解决"说明显示不全" */
+    #tarotBoard .tcard.flipped .meaning{ max-height:0; opacity:0; transform:translateY(8px); }
+    #tarotBoard .tcard.flipped.show-meaning .meaning{ max-height:520px; opacity:1; transform:none; }
     /* 自定义下拉在手机上撑满 */
     .tp-select{ flex:1 1 auto; }
     .tp-select-btn{ width:100%; }
@@ -1100,8 +1103,12 @@ function renderBoard(reading){
           '<div class="orient '+(item.reversed?'rev':'up')+'">'+(item.reversed?'逆位':'正位')+'</div>' +
           '<div class="text">'+long+'</div>' +
         '</div>';
-      cell.querySelector('.flipbtn').onclick = ()=> tryFlip(cell, idx);
-      cell.onclick = ()=>{ if(cell.classList.contains('flipped')||cell.classList.contains('active')) return; hintOrder(); };
+      cell.querySelector('.flipbtn').onclick = (e)=>{ e.stopPropagation(); tryFlip(cell, idx); };
+      cell.onclick = ()=>{
+        if(cell.classList.contains('flipped')){ cell.classList.toggle('show-meaning'); return; }  // 已翻开：点击切换释义显隐
+        if(cell.classList.contains('active')){ tryFlip(cell, idx); return; }                      // 当前可翻：直接翻开
+        /* 未翻开的牌：无效（不响应） */
+      };
       tarotBoard.appendChild(cell);
       tarotState.cells[idx] = cell;
     });
@@ -1119,7 +1126,7 @@ function activateNext(){
     else { cell.classList.add('locked'); cell.classList.remove('active'); }
   }
   if(t.next >= t.total){
-    tpGuide.textContent = '✦ 牌阵已就位，请静心体会每张牌的启示，再请星灵为你解读。';
+    tpGuide.innerHTML = '✦ 牌阵已就位，请静心体会每张牌的启示，再请星灵为你解读。<br><span style="opacity:.7;font-size:12px;">（轻触已翻开的牌，可显现/收起其释义）</span>';
     return;
   }
   const item = t.reading.cards[t.next];
