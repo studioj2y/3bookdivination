@@ -119,14 +119,14 @@
   .flipcard .f-back{transform:rotateY(180deg);border:1px solid rgba(150,120,255,.4);background:#0c0820;}
   /* 释义面板：从卡面中段滑入、覆盖下半部 */
   .cardwrap{position:relative;display:inline-block;margin-top:4px;}
-  .mpanel{position:absolute;left:0;right:0;bottom:0;height:52%;
+  .mpanel{position:absolute;left:0;right:0;bottom:0;height:62%;
     transform:translateY(108%);opacity:0;pointer-events:none;
     display:flex;flex-direction:column;gap:6px;padding:10px 9px 12px;
-    background:linear-gradient(180deg, rgba(48,20,82,.60), rgba(20,8,42,.92));
+    background:linear-gradient(180deg, rgba(48,20,82,.54), rgba(20,8,42,.83));
     -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
-    border:1px solid rgba(185,145,255,.5);border-top:1px solid rgba(205,165,255,.8);
+    border:1px solid rgba(185,145,255,.45);border-top:1px solid rgba(205,165,255,.72);
     border-radius:0 0 10px 10px;
-    box-shadow:0 0 26px rgba(150,90,255,.55), inset 0 0 20px rgba(150,90,255,.22);
+    box-shadow:0 0 26px rgba(150,90,255,.50), inset 0 0 20px rgba(150,90,255,.20);
     transition:transform .5s cubic-bezier(.2,.8,.2,1), opacity .45s ease;
     overflow:hidden;}
   .tcard.flipped.show-meaning .mpanel{transform:translateY(0);opacity:1;pointer-events:auto;}
