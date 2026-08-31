@@ -22,17 +22,18 @@ import tarot_ai
 
 app = FastAPI(title="全自动算命机 · 塔罗 API")
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # 本文件所在目录（api/）
+ROOT_DIR = os.path.dirname(BASE_DIR)                       # 项目根目录（index.html / tarot_images 所在）
 
-# 本地开发：用一条 `uvicorn app:app` 同时托管前端页面、塔罗图片与 /api。
+# 本地开发：用一条 `uvicorn api.app:app` 同时托管前端页面、塔罗图片与 /api。
 # Vercel 上由平台静态托管接管（不进此分支，避免覆盖函数路由 / 静态资源）。
 if not os.environ.get("VERCEL"):
     @app.get("/")
     def index():
-        return FileResponse(os.path.join(BASE_DIR, "index.html"))
+        return FileResponse(os.path.join(ROOT_DIR, "index.html"))
     app.mount(
         "/tarot_images",
-        StaticFiles(directory=os.path.join(BASE_DIR, "tarot_images")),
+        StaticFiles(directory=os.path.join(ROOT_DIR, "tarot_images")),
         name="tarot_images",
     )
 
