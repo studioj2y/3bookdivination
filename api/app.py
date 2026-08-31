@@ -16,6 +16,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
+import sys
+
+# 把本文件所在目录（api/）加入路径，使 `import tarot` / `import tarot_ai` 在
+# 本地 `uvicorn api.app:app` 与 Vercel Serverless 两种运行方式下都能解析。
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import tarot
 import tarot_ai
