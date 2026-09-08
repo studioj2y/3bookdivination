@@ -87,6 +87,15 @@
   .bz-wxrow .ct{width:14px;text-align:right;color:#b9aee0;font-size:12px;}
   .bz-kv{display:flex;gap:8px 18px;flex-wrap:wrap;color:#d9cfff;font-size:13px;line-height:1.95;}
   .bz-kv b{color:#cdb6ff;font-weight:500;}
+  .bz-de{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 6px;width:100%;}
+  .bz-deitem{display:flex;flex-direction:column;gap:2px;padding:8px 9px;border-radius:10px;font-size:12px;line-height:1.5;border:1px solid rgba(150,120,255,.22);background:rgba(120,90,200,.08);color:#a99cd4;}
+  .bz-deitem b{font-weight:500;font-size:12.5px;}
+  .bz-deitem.ok{border-color:rgba(205,165,255,.55);background:rgba(150,100,255,.16);color:#e6dcff;}
+  .bz-deitem.ok b{color:#e0c8ff;}
+  .bz-deitem.no{opacity:.72;}
+  .bz-deitem.no b{color:#9c90c4;}
+  .bz-demethod{width:100%;color:#8f83bb;font-size:11.5px;line-height:1.7;margin:2px 0 8px;}
+  .bz-sub{display:block;color:#8f83bb;font-size:11.5px;line-height:1.6;}
   .bz-feat{display:flex;flex-direction:column;gap:11px;}
   .bz-feat .fi{border-left:2px solid rgba(180,140,255,.65);padding:1px 0 1px 12px;}
   .bz-feat .ft{color:#ece4ff;font-size:13.5px;}
@@ -95,6 +104,7 @@
   @media (max-width:720px){
     .bz-pillars{gap:6px;}
     .bz-pillar{padding:10px 3px;border-radius:11px;}
+    .bz-de{grid-template-columns:repeat(2,1fr);}
     .bz-gan,.bz-zhi{font-size:24px;}
     .bz-cangan{font-size:9.5px;}
     .bz-form{width:100%;}
@@ -1154,11 +1164,27 @@ function renderBazi(r){
   }).join('');
 
   const ws = r.wangshuai || {};
+  const de = ws.de || null;
+  let deHtml = '';
+  if (de) {
+    const item = (k) => {
+      const v = de[k]; if (!v) return '';
+      return '<span class="bz-deitem ' + (v.ok ? 'ok' : 'no') + '">' +
+        '<b>' + v.label + ' ' + (v.ok ? '有' : '无') + '</b>' + v.note + '</span>';
+    };
+    deHtml = '<div class="bz-de">' + ['ling', 'di', 'sheng', 'shi'].map(item).join('') + '</div>' +
+      '<div class="bz-demethod">旺衰依传统「四得」判定（' + (ws.method || '') + '），' +
+      '得分 ' + (ws.de_score != null ? ws.de_score : '—') +
+      '；加权求和法参考值为「' + (ws.ratio_level || '—') + '」，两法' +
+      (ws.agree ? '一致。' : '不一致，以四得法为准。') + '</div>';
+  }
   const feats = (r.features || []).map(f =>
     '<div class="fi"><div class="ft">' + f.title + '</div><div class="fd">' + f.desc + '</div></div>').join('');
   const dh = r.diao_hou || {};
   const dhTxt = (dh.elems && dh.elems.length) ? dh.elems.join('、') + '（' + dh.why + '）' : '—';
-  const useTxt = (r.use_gods && r.use_gods.length) ? r.use_gods.join('、') : '命局中和，宜五行均衡';
+  const useTxt = (r.use_gods && r.use_gods.length)
+    ? r.use_gods.join('、') + (r.use_gods_note ? '<span class="bz-sub">' + r.use_gods_note + '</span>' : '')
+    : '命局中和，宜五行均衡';
 
   bzResult.innerHTML =
     '<div class="bz-head">' + r.eight_chars + '　·　农历 ' + r.lunar_date + '　·　生肖 ' + r.zodiac +
@@ -1168,6 +1194,7 @@ function renderBazi(r){
     '<div class="bz-card"><h3>日主与喜用</h3><div class="bz-kv">' +
       '<span><b>日主</b> ' + r.day_master + '（' + r.day_master_wx + '）</span>' +
       '<span><b>旺衰</b> ' + ws.level + '　自党占比 ' + (ws.ratio != null ? ws.ratio : '—') + '</span>' +
+      deHtml +
       '<span><b>喜用神</b> ' + useTxt + '</span>' +
       '<span><b>调候参考</b> ' + dhTxt + '</span>' +
     '</div></div>' +

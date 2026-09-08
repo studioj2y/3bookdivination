@@ -61,11 +61,23 @@ ZANG_W = [1.0, 0.5, 0.25]
 # 月令（月支本气）加权
 YUE_LING_W = 1.4
 
-# 旺衰分位阈值（6000 样本校准：弱 35.0% / 中和 30.1% / 旺 34.9%）
-# 注意：不可用「自党-异党」的原始差值配固定阈值——自党只占 5 类生克关系中的 2 类，
+# 旺衰分位阈值（仅作参考指标，不再用于主判定）
+# 说明：不可用「自党-异党」的原始差值配固定阈值——自党只占 5 类生克关系中的 2 类，
 # 差值的期望本就是负数（实测均值 -0.82），会导致判定向「弱」系统性偏移。
-WEAK_T = 0.4040      # ratio < 0.4040 → 弱
-STRONG_T = 0.5191    # ratio > 0.5191 → 旺
+# 但 ratio 分位法本质是「统计归一化」：它只能保证输出分布好看，不能保证个体判对
+# （实测：分位法与传统四得法分布几乎相同，却有 40% 样本判定不同、6.9% 旺弱相反）。
+# 故主判定改用传统四得法，ratio 仅保留为可对照的参考量。
+WEAK_T = 0.4040      # ratio < 0.4040 → 弱（参考）
+STRONG_T = 0.5191    # ratio > 0.5191 → 旺（参考）
+
+# —— 传统四得：得令 / 得地 / 得生 / 得势 ——
+# 传统以「月令为纲」，四得权重按通行配分（民间流传，非古籍明文，但月令最重是共识）
+DE_W = {'ling': 0.40, 'di': 0.35, 'sheng': 0.15, 'shi': 0.10}
+# 语义阈值（非统计分位）：
+#   >= 0.55 约当「得令且有根」或「失令而得地得生得势俱全」→ 旺
+#   <= 0.33 约当「失令且根气不足」→ 弱（失令但支有全根者 0.35，不判弱，合「有根不弱」）
+DE_STRONG_T = 0.55
+DE_WEAK_T = 0.33
 
 PILLAR_LABELS = ['年柱', '月柱', '日柱', '时柱']
 
@@ -103,6 +115,78 @@ def ten_god(dm_gan, target_gan):
     if not table:
         return ''
     return table[0] if same else table[1]
+
+
+# ---------------- 传统四得：得令 / 得地 / 得生 / 得势 ----------------
+def de_ling(dm_wx, yue_zhi):
+    """得令：月支本气与日主的关系，传统「旺相休囚死」五态。
+    旺(同气)、相(生我) 为得令；休(我生)、死(我克)、囚(克我) 为失令。"""
+    m = ZHI_WX.get(yue_zhi, '')
+    if not m:
+        return 0.0, ''
+    if m == dm_wx:
+        return 1.0, '旺'
+    if SHENG.get(m) == dm_wx:
+        return 0.80, '相'
+    if SHENG.get(dm_wx) == m:
+        return 0.35, '休'
+    if KE.get(dm_wx) == m:
+        return 0.10, '死'
+    if KE.get(m) == dm_wx:
+        return 0.0, '囚'
+    return 0.0, ''
+
+
+def de_di(dm_wx, zhis):
+    """得地：四支藏干中有无日主之根。本气根最强、中气次之、余气/库最微；
+    月支为根最有力（月令为纲），日支为日主坐支，权重亦高。"""
+    s = 0.0
+    roots = []
+    for i, z in enumerate(zhis):
+        for j, (zg, zw) in enumerate(ZANG.get(z, [])):
+            if zw != dm_wx:
+                continue
+            w = [1.0, 0.5, 0.25][j] if j < 3 else 0.25
+            if i == 1:
+                w *= 1.5      # 月支
+            elif i == 2:
+                w *= 1.3      # 日支（坐支）
+            s += w
+            roots.append(z)
+    return min(s / 2.0, 1.0), roots
+
+
+def compute_de(pillars, dm_wx):
+    """四得加权评分。返回 (score, level, 明细)。"""
+    dm_gan = pillars[2]['gan']
+    yue_zhi = pillars[1]['zhi']
+    zhis = [p['zhi'] for p in pillars]
+    gans = [p['gan'] for p in pillars]
+
+    ling, ling_state = de_ling(dm_wx, yue_zhi)
+    di, roots = de_di(dm_wx, zhis)
+    sheng = 1.0 if any(g != dm_gan and SHENG.get(GAN_WX[g]) == dm_wx for g in gans) else 0.0
+    shi = 1.0 if any(g != dm_gan and GAN_WX[g] == dm_wx for g in gans) else 0.0
+
+    score = (ling * DE_W['ling'] + di * DE_W['di']
+             + sheng * DE_W['sheng'] + shi * DE_W['shi'])
+    if score >= DE_STRONG_T:
+        level = '旺'
+    elif score <= DE_WEAK_T:
+        level = '弱'
+    else:
+        level = '中和'
+
+    detail = {
+        'ling':  {'ok': ling >= 0.8, 'score': round(ling, 2), 'state': ling_state,
+                  'label': '得令', 'note': '月支' + (ling_state or '')},
+        'di':    {'ok': di >= 0.4, 'score': round(di, 2),
+                  'label': '得地', 'note': ('根在' + ''.join(sorted(set(roots)))) if roots else '支中无根'},
+        'sheng': {'ok': sheng > 0, 'score': sheng, 'label': '得生', 'note': '天干透印' if sheng else '天干无印'},
+        'shi':   {'ok': shi > 0, 'score': shi, 'label': '得势', 'note': '天干透比劫' if shi else '天干无比劫'},
+        'score': round(score, 3),
+    }
+    return score, level, detail
 
 
 # ---------------- 命盘要点文案（事实型，非性格评价） ----------------
@@ -251,7 +335,7 @@ def compute_bazi(year, month, day, hour=12, minute=0, sex=None, lon=None):
         if p['zhi_wx']:
             wuxing[p['zhi_wx']] += 1
 
-    # —— 日主旺衰：十神加权自党 vs 异党，用占比 ratio 判定 ——
+    # —— 日主旺衰：主判定用传统四得法（月令为纲），ratio 仅作参考量 ——
     self_w, other_w = 0.0, 0.0
     for i, p in enumerate(gz):
         if _relation(dm_wx, GAN_WX[p[0]]) in ('self', 'support'):
@@ -268,14 +352,14 @@ def compute_bazi(year, month, day, hour=12, minute=0, sex=None, lon=None):
                 other_w += w
     total_w = self_w + other_w
     ratio = self_w / total_w if total_w else 0.5
-    if ratio > STRONG_T:
-        level = '旺'
-    elif ratio < WEAK_T:
-        level = '弱'
-    else:
-        level = '中和'
+
+    de_score, level, de_detail = compute_de(pillars, dm_wx)
+    ratio_level = '旺' if ratio > STRONG_T else ('弱' if ratio < WEAK_T else '中和')
 
     # —— 扶抑用神 ——
+    # 中和者本不需扶抑，此处回落到调候用神，避免出现「喜用为空」的空白展示
+    month_zhi0 = gz[1][1]
+    dh0, _ = DIAO_HOU.get(month_zhi0, ([], ''))
     if level == '旺':
         use = [SHENG.get(dm_wx), KE.get(dm_wx)]                       # 食伤、财
         ctrl = next((k for k in ELES if KE.get(k) == dm_wx), None)    # 官杀
@@ -286,7 +370,8 @@ def compute_bazi(year, month, day, hour=12, minute=0, sex=None, lon=None):
         support_elem = next((k for k in ELES if SHENG.get(k) == dm_wx), None)   # 印
         need = [dm_wx] + ([support_elem] if support_elem else [])
     else:
-        need = []
+        need = list(dh0)
+    need_note = '' if level != '中和' else '中和之局不需扶抑，此处列调候用神'
 
     month_zhi = gz[1][1]
     dh, dh_why = DIAO_HOU.get(month_zhi, ([], ''))
@@ -306,12 +391,18 @@ def compute_bazi(year, month, day, hour=12, minute=0, sex=None, lon=None):
         'day_master_wx': dm_wx,
         'wuxing': wuxing,
         'wangshuai': {
-            'level': level,
-            'ratio': round(ratio, 4),
+            'level': level,              # 主判定：传统四得法
+            'method': '四得法（得令·得地·得生·得势，月令为纲）',
+            'de': de_detail,             # 四得明细，供前端透明展示
+            'de_score': round(de_score, 3),
+            'ratio': round(ratio, 4),    # 参考量：加权求和占比
+            'ratio_level': ratio_level,  # 参考量：按 ratio 的判定
+            'agree': ratio_level == level,
             'self_w': round(self_w, 2),
             'other_w': round(other_w, 2),
         },
         'use_gods': need,
+        'use_gods_note': need_note,
         'diao_hou': {'elems': dh, 'why': dh_why},
         'features': feats,
         'note': solar_note or '（未做经度校正，按输入时间直排；如需严谨请填写出生地经度）',
