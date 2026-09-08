@@ -1,7 +1,6 @@
-# Vercel Python Serverless Function 依赖（塔罗 B 路线）
+# Vercel Python Serverless Function 依赖（塔罗 + 八字；均为纯 Python，无需编译）
 fastapi
 requests
 certifi
-# 后续接入八字/占星时再启用（均为纯 Python，Vercel 可装）：
-# lunar_python
-# pymeeus
+lunar_python
+# 占星模块（astro.py）仅用标准库 math，自算恒星时与上升，无需 pymeeus。

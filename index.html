@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no"/>
+<html lang="zh-CN" data-page-node-id="HzF19vGOW2RYxcDz1DBasv">
+<head data-page-node-id="jKQAlk3tXNWBfP0Ap7MnwX">
+<meta charset="utf-8" data-page-node-id="pAKa7ChYGDpPvRCUTOn3wC"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" data-page-node-id="K4XwpDGXZLUdZVGxvK8ZpG"/>
 <title>超级银河自动算命机高级版II型强化式样</title>
 <style>
   html,body{margin:0;height:100%;background:#000;overflow:hidden;
@@ -60,6 +60,47 @@
   .back:hover{background:rgba(80,50,140,.55);border-color:#cdb6ff;}
   #gl,#ui{transition:opacity 1s ease;}
   body.func #gl,body.func #ui{opacity:.12;}
+  /* === 八字功能面板（书一）=== */
+  #baziPanel{display:none;width:min(900px,94vw);max-height:86vh;overflow-y:auto;flex-direction:column;align-items:center;gap:14px;padding:6px;
+    scrollbar-width:thin;scrollbar-color:rgba(180,160,255,.28) transparent;}
+  #baziPanel.show{display:flex;}
+  .bz-form{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;justify-content:center;}
+  .bz-field{display:flex;flex-direction:column;gap:5px;}
+  .bz-field label{color:#b9aee0;font-size:12px;letter-spacing:.06em;}
+  .bz-field input,.bz-field select{background:rgba(20,12,40,.8);color:#e9deff;border:1px solid rgba(160,120,255,.4);border-radius:10px;padding:8px 11px;font-size:14px;font-family:inherit;color-scheme:dark;}
+  .bz-field input:focus,.bz-field select:focus{outline:none;border-color:#cdb6ff;}
+  .bz-info{color:#cdb6ff;font-size:13px;text-align:center;min-height:20px;}
+  #bzResult{display:flex;flex-direction:column;gap:14px;width:100%;}
+  .bz-head{color:#b9aee0;font-size:12.5px;text-align:center;letter-spacing:.05em;}
+  .bz-pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;}
+  .bz-pillar{background:linear-gradient(180deg,rgba(34,20,66,.9),rgba(18,10,38,.92));border:1px solid rgba(160,120,255,.35);border-radius:14px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;}
+  .bz-pillar .plabel{color:#b9aee0;font-size:11px;letter-spacing:.14em;}
+  .bz-gan,.bz-zhi{font-size:30px;line-height:1.15;}
+  .bz-god{color:#cdb6ff;font-size:12px;}
+  .bz-cangan{color:#8f83bb;font-size:10.5px;text-align:center;line-height:1.55;margin-top:3px;}
+  .bz-card{width:100%;background:rgba(18,10,38,.72);border:1px solid rgba(150,120,255,.28);border-radius:14px;padding:14px 16px;}
+  .bz-card h3{color:#ece4ff;font-size:14px;font-weight:500;margin:0 0 10px;letter-spacing:.08em;}
+  .bz-wxrow{display:flex;align-items:center;gap:9px;margin:6px 0;}
+  .bz-wxrow .nm{width:18px;color:#cdb6ff;font-size:13px;}
+  .bz-bar{flex:1;height:9px;background:rgba(120,90,200,.16);border-radius:6px;overflow:hidden;}
+  .bz-bar i{display:block;height:100%;border-radius:6px;}
+  .bz-wxrow .ct{width:14px;text-align:right;color:#b9aee0;font-size:12px;}
+  .bz-kv{display:flex;gap:8px 18px;flex-wrap:wrap;color:#d9cfff;font-size:13px;line-height:1.95;}
+  .bz-kv b{color:#cdb6ff;font-weight:500;}
+  .bz-feat{display:flex;flex-direction:column;gap:11px;}
+  .bz-feat .fi{border-left:2px solid rgba(180,140,255,.65);padding:1px 0 1px 12px;}
+  .bz-feat .ft{color:#ece4ff;font-size:13.5px;}
+  .bz-feat .fd{color:#b0a4d6;font-size:12.5px;line-height:1.7;margin-top:3px;}
+  .bz-note{color:#8f83bb;font-size:11.5px;text-align:center;line-height:1.7;}
+  @media (max-width:720px){
+    .bz-pillars{gap:6px;}
+    .bz-pillar{padding:10px 3px;border-radius:11px;}
+    .bz-gan,.bz-zhi{font-size:24px;}
+    .bz-cangan{font-size:9.5px;}
+    .bz-form{width:100%;}
+    .bz-field{width:100%;}
+    .bz-field input,.bz-field select{width:100%;box-sizing:border-box;}
+  }
   /* === 塔罗功能面板（书三）=== */
   #tarotPanel{display:none;width:min(1120px,95vw);max-height:86vh;overflow-y:auto;flex-direction:column;align-items:center;gap:16px;padding:6px;
     scrollbar-width:thin;scrollbar-color:rgba(180,160,255,.28) transparent;}
@@ -223,233 +264,289 @@
   }
 </style>
 </head>
-<body>
-  <div id="table"></div>
-  <canvas id="gl"></canvas>
-  <canvas id="ui"></canvas>
-  <canvas id="fx"></canvas>
-<div id="hint">轻触水晶球，进入未知</div>
-  <div id="ver"></div>
-<button id="replay" class="btn">&#8635; 重播</button>
-<button id="skip" class="btn">跳过引导</button>
-<div id="fallback">此预览需要 WebGL 支持。<br/>请用较新的 Chrome / Edge / Firefox / Safari 打开。</div>
+<body data-page-node-id="laBbLKI7EtDBh2BS9ocYAU">
+  <div id="table" data-page-node-id="npOR26Hd7Zq3LuFVXM0xe1"></div>
+  <canvas id="gl" data-page-node-id="sc4oxDaS71I8iyzAeFSjTd"></canvas>
+  <canvas id="ui" data-page-node-id="fIqv47PvAsEWzGMf9Ffijo"></canvas>
+  <canvas id="fx" data-page-node-id="4pRaf6bGfdMv0PPxytk6QY"></canvas>
+<div id="hint" data-page-node-id="oMw1Xq4BfFIpawYCNXT8H0">轻触水晶球，进入未知</div>
+  <div id="ver" data-page-node-id="OMdi7C7ThhaEfVF1bxJBn6"></div>
+<button id="replay" class="btn" data-page-node-id="97btVLAM8UmFdfWIB6IVja">&#8635; 重播</button>
+<button id="skip" class="btn" data-page-node-id="wuuVciwRrGFHCA5GXUZFuY">跳过引导</button>
+<div id="fallback" data-page-node-id="JTpvt0xaHZB0silBBGTyk5">此预览需要 WebGL 支持。<br data-page-node-id="TtwxMRMRGHJAhUnlnIo4BA"/>请用较新的 Chrome / Edge / Firefox / Safari 打开。</div>
 
-<div id="books">
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-    <radialGradient id="grungeVig" cx="0.5" cy="0.46" r="0.62"><stop offset="0.52" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.55"/></radialGradient>
-    <filter id="grungeStain" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.02 0.03" numOctaves="3" seed="7" result="t"/><feColorMatrix in="t" type="matrix" values="0 0 0 0 0.08  0 0 0 0 0.04  0 0 0 0 0.02  0 0 0 0.9 0"/></filter>
+<div id="books" data-page-node-id="YIc7jp9QW9UhsOPS1pIIo3">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" data-page-node-id="nG48IqDyiGWswnNzfLnPyV"><defs data-page-node-id="AHxqMnEU97XSRBAcyUYmlY">
+    <radialGradient id="grungeVig" cx="0.5" cy="0.46" r="0.62" data-page-node-id="LGQSPcFXqpprZmnQXGqY94"><stop offset="0.52" stop-color="#000" stop-opacity="0" data-page-node-id="TPHkqUXJDY5cGkLUZXlvJX"/><stop offset="1" stop-color="#000" stop-opacity="0.55" data-page-node-id="FkjXdu955s7nbAzZMjPUqq"/></radialGradient>
+    <filter id="grungeStain" x="-5%" y="-5%" width="110%" height="110%" data-page-node-id="yN0cH40Hittl8nphHyVM1J"><feTurbulence type="fractalNoise" baseFrequency="0.02 0.03" numOctaves="3" seed="7" result="t" data-page-node-id="aBhg2j6d5YLxG0pMZyRXvO"/><feColorMatrix in="t" type="matrix" values="0 0 0 0 0.08  0 0 0 0 0.04  0 0 0 0 0.02  0 0 0 0.9 0" data-page-node-id="2PemjLNcDnQwsFjKyq1JgS"/></filter>
   </defs></svg>
-  <div class="bookWrap" style="--d:.15s"><div class="book" data-idx="0">
-      <svg viewBox="0 0 120 180" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="cov0" x1="0" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#6e332c"/><stop offset="0.5" stop-color="#4a201b"/><stop offset="1" stop-color="#291110"/></linearGradient>
-        <linearGradient id="spine0" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#190b08"/><stop offset="1" stop-color="#3a1814"/></linearGradient>
-        <linearGradient id="gold0" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e7c878"/><stop offset="0.5" stop-color="#a9802f"/><stop offset="1" stop-color="#d8b25a"/></linearGradient>
-        <radialGradient id="emb0" cx="0.5" cy="0.4" r="0.65"><stop offset="0" stop-color="#23110d"/><stop offset="1" stop-color="#0b0504"/></radialGradient>
-        <filter id="grain0" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="11" stitchTiles="stitch" result="t"/><feColorMatrix in="t" type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer></filter>
-        <filter id="sh0" x="-40%" y="-40%" width="180%" height="200%"><feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000" flood-opacity="0.55"/></filter>
+  <div class="bookWrap" style="--d:.15s" data-page-node-id="CfX8ht6EmDTTMNOFRsOth9"><div class="book" data-idx="0" data-page-node-id="og3zAnqmOTLMW0n84YT3PF">
+      <svg viewBox="0 0 120 180" xmlns="http://www.w3.org/2000/svg" data-page-node-id="LCa62gfut9teNEVpkzsuvH">
+      <defs data-page-node-id="DgyhEim9QiIjghM9zJW5D0">
+        <linearGradient id="cov0" x1="0" y1="0" x2="0.85" y2="1" data-page-node-id="o6q6Ga3Gvr2ALj0G8qqH2R"><stop offset="0" stop-color="#6e332c" data-page-node-id="6JR5v6f6cbFWXfVLA1fLot"/><stop offset="0.5" stop-color="#4a201b" data-page-node-id="F7Flz2eArjTqJ12VhslCAJ"/><stop offset="1" stop-color="#291110" data-page-node-id="a3Rwkj8IykRSYEfHnFQLHX"/></linearGradient>
+        <linearGradient id="spine0" x1="0" y1="0" x2="1" y2="0" data-page-node-id="O2Oydse1wVo7v5MU1njOOF"><stop offset="0" stop-color="#190b08" data-page-node-id="KAs43OlOjGaAPVDd8SlxUC"/><stop offset="1" stop-color="#3a1814" data-page-node-id="pkxJk2VKc18DNzYoEp6HZW"/></linearGradient>
+        <linearGradient id="gold0" x1="0" y1="0" x2="1" y2="1" data-page-node-id="nMY9XEFHAQuDZsIZntmEFG"><stop offset="0" stop-color="#e7c878" data-page-node-id="UXccoq6b5zAdQrhTCYpwje"/><stop offset="0.5" stop-color="#a9802f" data-page-node-id="MikkCc9hnzpldBclW8F9df"/><stop offset="1" stop-color="#d8b25a" data-page-node-id="2phVb8yazidSJ99NkKUHL5"/></linearGradient>
+        <radialGradient id="emb0" cx="0.5" cy="0.4" r="0.65" data-page-node-id="LNxVFXTAPqY8WwHXVLsklW"><stop offset="0" stop-color="#23110d" data-page-node-id="4fXcBCzSKUYgmBDCgjBSKt"/><stop offset="1" stop-color="#0b0504" data-page-node-id="FGX2Amr46vVbz8GRujg9xx"/></radialGradient>
+        <filter id="grain0" x="-5%" y="-5%" width="110%" height="110%" data-page-node-id="LP7z1C24jZV7uxYFzibiBc"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="11" stitchTiles="stitch" result="t" data-page-node-id="nYZfdIzWkJzJYtQtLKbKmz"/><feColorMatrix in="t" type="saturate" values="0" data-page-node-id="sEOgnzgVJIqWMyQivCABXe"/><feComponentTransfer data-page-node-id="cfLVbsJ4wVHLL5H0YaDhOP"><feFuncA type="linear" slope="0.45" data-page-node-id="VM8uHDkAhXuyEjAY5XRGx4"/></feComponentTransfer></filter>
+        <filter id="sh0" x="-40%" y="-40%" width="180%" height="200%" data-page-node-id="473sSoqKWnv17bb2L4a85p"><feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000" flood-opacity="0.55" data-page-node-id="AiHkDH0OcITVFHYgYYKRao"/></filter>
       </defs>
-      <g filter="url(#sh0)">
-        <rect x="100" y="14" width="9" height="152" rx="2" fill="#d8c79c"/>
-        <g stroke="#b6a877" stroke-width="0.6" opacity="0.65"><line x1="100" y1="34" x2="109" y2="34"/><line x1="100" y1="64" x2="109" y2="64"/><line x1="100" y1="94" x2="109" y2="94"/><line x1="100" y1="124" x2="109" y2="124"/><line x1="100" y1="150" x2="109" y2="150"/></g>
-        <rect x="100" y="14" width="2.4" height="152" fill="#caa24a" opacity="0.8"/>
-        <rect x="14" y="8" width="88" height="164" rx="6" fill="url(#cov0)" stroke="#160806" stroke-width="1"/>
-        <rect x="14" y="8" width="88" height="164" rx="6" filter="url(#grain0)" opacity="0.32"/>
-        <rect x="14" y="8" width="88" height="164" rx="6" filter="url(#grungeStain)" opacity="0.55"/>
-        <g fill="#000" opacity="0.10">
-          <ellipse cx="42" cy="142" rx="14" ry="9"/>
-          <ellipse cx="90" cy="48" rx="9" ry="6"/>
-          <ellipse cx="55" cy="100" rx="17" ry="11"/>
-          <ellipse cx="28" cy="70" rx="8" ry="6"/>
+      <g filter="url(#sh0)" data-page-node-id="aeXGFrr75N9D2A70SxR5sw">
+        <rect x="100" y="14" width="9" height="152" rx="2" fill="#d8c79c" data-page-node-id="h2K9Z95F3Kvj5Rmv95NEU5"/>
+        <g stroke="#b6a877" stroke-width="0.6" opacity="0.65" data-page-node-id="ot3ai0N3R03aJQGS5SvJsG"><line x1="100" y1="34" x2="109" y2="34" data-page-node-id="IiQK8Hbes9BMuaNlEBUuh7"/><line x1="100" y1="64" x2="109" y2="64" data-page-node-id="S019HELloDlbSRNu0c7eqg"/><line x1="100" y1="94" x2="109" y2="94" data-page-node-id="XvHxN67RGNsaWOF2Vg2MhE"/><line x1="100" y1="124" x2="109" y2="124" data-page-node-id="8MexZanYqBrycRkLf57VNz"/><line x1="100" y1="150" x2="109" y2="150" data-page-node-id="DDPoaKKAZIk19dclaljGj0"/></g>
+        <rect x="100" y="14" width="2.4" height="152" fill="#caa24a" opacity="0.8" data-page-node-id="FNbJ7IA7duzFxxMc7Y5iMi"/>
+        <rect x="14" y="8" width="88" height="164" rx="6" fill="url(#cov0)" stroke="#160806" stroke-width="1" data-page-node-id="Lc5cHiLOAqFtCEQgfRMnQ2"/>
+        <rect x="14" y="8" width="88" height="164" rx="6" filter="url(#grain0)" opacity="0.32" data-page-node-id="orrGwkIHhAlOAlVbcTqOnG"/>
+        <rect x="14" y="8" width="88" height="164" rx="6" filter="url(#grungeStain)" opacity="0.55" data-page-node-id="axNNnZAIHlv04mwX4ocTWF"/>
+        <g fill="#000" opacity="0.10" data-page-node-id="zHzCMBuE2bNkqmK3tLc7SQ">
+          <ellipse cx="42" cy="142" rx="14" ry="9" data-page-node-id="ETapbycA68geELRyqiPo1g"/>
+          <ellipse cx="90" cy="48" rx="9" ry="6" data-page-node-id="FVBvGxW2ouox0SphTGyMlD"/>
+          <ellipse cx="55" cy="100" rx="17" ry="11" data-page-node-id="pJEmc48vJ2BevmY20uSy4L"/>
+          <ellipse cx="28" cy="70" rx="8" ry="6" data-page-node-id="QFpj2dDUGBlG84F19qfeNN"/>
         </g>
-        <g fill="#2c1d0c" opacity="0.22">
-          <ellipse cx="30" cy="92" rx="6" ry="4"/>
-          <ellipse cx="86" cy="128" rx="7" ry="5"/>
-          <ellipse cx="64" cy="156" rx="10" ry="5"/>
+        <g fill="#2c1d0c" opacity="0.22" data-page-node-id="7frRNyN1krYqYiFjcOjRvG">
+          <ellipse cx="30" cy="92" rx="6" ry="4" data-page-node-id="31TXbPFlB1tAiCTMfiEyBX"/>
+          <ellipse cx="86" cy="128" rx="7" ry="5" data-page-node-id="IIXna0oLub84tdHYgtmjk7"/>
+          <ellipse cx="64" cy="156" rx="10" ry="5" data-page-node-id="fyCI6W9UyHhy0pH00vAkol"/>
         </g>
-        <g stroke="#000" stroke-opacity="0.15" stroke-width="0.6" fill="none" stroke-linecap="round">
-          <path d="M22,36 L46,54"/><path d="M30,154 L72,136"/><path d="M88,26 L96,94"/><path d="M20,108 L52,98"/><path d="M40,150 L44,118"/>
+        <g stroke="#000" stroke-opacity="0.15" stroke-width="0.6" fill="none" stroke-linecap="round" data-page-node-id="g672ISieERcEDtIZy2GgVU">
+          <path d="M22,36 L46,54" data-page-node-id="u3nvzZWiEPoC6V9TtxjPdb"/><path d="M30,154 L72,136" data-page-node-id="sYenxTQTvmfYAHftJdXKhd"/><path d="M88,26 L96,94" data-page-node-id="fkeiG6fqaBbG2agoBO0wfR"/><path d="M20,108 L52,98" data-page-node-id="OoYL6IfpQEnZu9UBHUt71j"/><path d="M40,150 L44,118" data-page-node-id="iNc1NkuUWgjRilUtJmVRny"/>
         </g>
-        <g stroke="#fff" stroke-opacity="0.05" stroke-width="0.5" fill="none">
-          <path d="M42,20 L60,72"/><path d="M24,126 L54,114"/><path d="M70,150 L88,140"/>
+        <g stroke="#fff" stroke-opacity="0.05" stroke-width="0.5" fill="none" data-page-node-id="VCADNzbGCkpESGhIudt4Oh">
+          <path d="M42,20 L60,72" data-page-node-id="o4mKd2APuuzSS3EGzPgeiM"/><path d="M24,126 L54,114" data-page-node-id="H3g7W843kNHn4afdrI2qZF"/><path d="M70,150 L88,140" data-page-node-id="33wd2Jrilz0qIDEHxGvg5N"/>
         </g>
-        <rect x="14" y="8" width="88" height="164" rx="6" fill="url(#grungeVig)"/>
-        <path d="M16,13 Q60,9 100,14 L100,30 Q60,24 16,30 Z" fill="#ffffff" opacity="0.05"/>
-        <ellipse cx="30" cy="20" rx="9" ry="4" fill="#000" opacity="0.10"/>
-        <ellipse cx="92" cy="160" rx="10" ry="5" fill="#000" opacity="0.12"/>
-        <ellipse cx="82" cy="42" rx="5" ry="3" fill="#fff" opacity="0.05"/>
-        <rect x="14" y="8" width="15" height="164" rx="6" fill="url(#spine0)"/>
-        <g stroke="#0c0605" stroke-width="1.4" opacity="0.8"><line x1="14" y1="40" x2="29" y2="40"/><line x1="14" y1="64" x2="29" y2="64"/><line x1="14" y1="116" x2="29" y2="116"/><line x1="14" y1="140" x2="29" y2="140"/></g>
-        <g stroke="url(#gold0)" stroke-width="0.8" opacity="0.7"><line x1="15" y1="22" x2="28" y2="22"/><line x1="15" y1="156" x2="28" y2="156"/></g>
-        <rect x="32" y="16" width="68" height="148" rx="4" fill="none" stroke="url(#gold0)" stroke-width="1.6" opacity="0.92"/>
-        <rect x="35" y="19" width="62" height="142" rx="3" fill="none" stroke="url(#gold0)" stroke-width="0.5" opacity="0.5"/>
-        <circle cx="66" cy="62" r="19" fill="url(#emb0)" stroke="url(#gold0)" stroke-width="1.4"/>
-        <circle cx="66" cy="62" r="15" fill="none" stroke="url(#gold0)" stroke-width="0.5" opacity="0.55"/>
-        <g transform="translate(66,62)">
-          <circle r="10.5" fill="#e9e2d2"/>
-          <path d="M0,-10.5 A10.5,10.5 0 0,1 0,10.5 A5.25,5.25 0 0,1 0,0 A5.25,5.25 0 0,0 0,-10.5 Z" fill="#1a0d09"/>
-          <circle cx="0" cy="-5.25" r="1.9" fill="#1a0d09"/>
-          <circle cx="0" cy="5.25" r="1.9" fill="#e9e2d2"/>
+        <rect x="14" y="8" width="88" height="164" rx="6" fill="url(#grungeVig)" data-page-node-id="MBjul7tzt4ZSYFbmFKVqxY"/>
+        <path d="M16,13 Q60,9 100,14 L100,30 Q60,24 16,30 Z" fill="#ffffff" opacity="0.05" data-page-node-id="cGDaBfAqvzURUjYzDLsHr2"/>
+        <ellipse cx="30" cy="20" rx="9" ry="4" fill="#000" opacity="0.10" data-page-node-id="hnozs8vP5RkBC7WcOwvkI8"/>
+        <ellipse cx="92" cy="160" rx="10" ry="5" fill="#000" opacity="0.12" data-page-node-id="1Ek6Jq49lBMF4HD9JOz01x"/>
+        <ellipse cx="82" cy="42" rx="5" ry="3" fill="#fff" opacity="0.05" data-page-node-id="dLI7693Ig7xSKYmML5C7Uy"/>
+        <rect x="14" y="8" width="15" height="164" rx="6" fill="url(#spine0)" data-page-node-id="GvSh3egsjQxLUTw8Z7GoJU"/>
+        <g stroke="#0c0605" stroke-width="1.4" opacity="0.8" data-page-node-id="IvESlcHGDWTFx2vUClkYbI"><line x1="14" y1="40" x2="29" y2="40" data-page-node-id="S7oECE5QmqSaigdNO2q4EP"/><line x1="14" y1="64" x2="29" y2="64" data-page-node-id="h8qD9MKEEB2vcrkoiAzkyA"/><line x1="14" y1="116" x2="29" y2="116" data-page-node-id="yHFxDMYrwNGeQuKpoGSAfQ"/><line x1="14" y1="140" x2="29" y2="140" data-page-node-id="HCqNd9NKLfFTPAw390cXgN"/></g>
+        <g stroke="url(#gold0)" stroke-width="0.8" opacity="0.7" data-page-node-id="GFk0p6N81hupDRQmxv3gSy"><line x1="15" y1="22" x2="28" y2="22" data-page-node-id="RChh6WXfMml7yNk1tLpxsa"/><line x1="15" y1="156" x2="28" y2="156" data-page-node-id="jfOPPGTI2dP1wbh58U2lOR"/></g>
+        <rect x="32" y="16" width="68" height="148" rx="4" fill="none" stroke="url(#gold0)" stroke-width="1.6" opacity="0.92" data-page-node-id="tlOfTrUufMtMhEFZvuUIlB"/>
+        <rect x="35" y="19" width="62" height="142" rx="3" fill="none" stroke="url(#gold0)" stroke-width="0.5" opacity="0.5" data-page-node-id="jTFEACj1BPdw7ZQ3JvXmx6"/>
+        <circle cx="66" cy="62" r="19" fill="url(#emb0)" stroke="url(#gold0)" stroke-width="1.4" data-page-node-id="et4LauEzeYrfBjsumHF8DY"/>
+        <circle cx="66" cy="62" r="15" fill="none" stroke="url(#gold0)" stroke-width="0.5" opacity="0.55" data-page-node-id="UerVLEBTvX03KpwhDLgNBs"/>
+        <g transform="translate(66,62)" data-page-node-id="4neVOMe3JVE4xKE7IOust2">
+          <circle r="10.5" fill="#e9e2d2" data-page-node-id="FiBV6819L2bnnqHSTfFGKz"/>
+          <path d="M0,-10.5 A10.5,10.5 0 0,1 0,10.5 A5.25,5.25 0 0,1 0,0 A5.25,5.25 0 0,0 0,-10.5 Z" fill="#1a0d09" data-page-node-id="o3cBKSzj1nCiginrmcD5hC"/>
+          <circle cx="0" cy="-5.25" r="1.9" fill="#1a0d09" data-page-node-id="vDgkDFDo0Pkrpcw1KoHs2y"/>
+          <circle cx="0" cy="5.25" r="1.9" fill="#e9e2d2" data-page-node-id="Gp64JSjTj28WRdjE7CePJc"/>
         </g>
-        <rect x="40" y="118" width="52" height="30" rx="4" fill="#1c0d0a" stroke="url(#gold0)" stroke-width="1" opacity="0.95"/>
-        <text x="66" y="138.4" text-anchor="middle" font-size="13" font-family="serif" letter-spacing="3" fill="url(#gold0)" font-weight="bold">八字</text>
-        <text x="66.6" y="139.2" text-anchor="middle" font-size="13" font-family="serif" letter-spacing="3" fill="#0a0504" font-weight="bold">八字</text>
+        <rect x="40" y="118" width="52" height="30" rx="4" fill="#1c0d0a" stroke="url(#gold0)" stroke-width="1" opacity="0.95" data-page-node-id="OVv7HVCEGOyWVm8G0YJuHU"/>
+        <text x="66" y="138.4" text-anchor="middle" font-size="13" font-family="serif" letter-spacing="3" fill="url(#gold0)" font-weight="bold" data-page-node-id="b9Dh7CoJa76fsVgBgT5uUW">八字</text>
+        <text x="66.6" y="139.2" text-anchor="middle" font-size="13" font-family="serif" letter-spacing="3" fill="#0a0504" font-weight="bold" data-page-node-id="0bHeinoXK4SfpaQXHrCweB">八字</text>
       </g>
     </svg>
-    <div class="label">八字</div>
+    <div class="label" data-page-node-id="xFODj28HRXAtUellmRtt9S">八字</div>
   </div></div>
-  <div class="bookWrap" style="--d:.5s"><div class="book" data-idx="1">
-      <svg viewBox="0 0 120 180" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="cov1" x1="0" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#2c5238"/><stop offset="0.5" stop-color="#17331f"/><stop offset="1" stop-color="#0d1f14"/></linearGradient>
-        <linearGradient id="spine1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0a160e"/><stop offset="1" stop-color="#17331f"/></linearGradient>
-        <linearGradient id="gold1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e7c878"/><stop offset="0.5" stop-color="#a9802f"/><stop offset="1" stop-color="#d8b25a"/></linearGradient>
-        <radialGradient id="emb1" cx="0.5" cy="0.4" r="0.65"><stop offset="0" stop-color="#0c1a10"/><stop offset="1" stop-color="#040a06"/></radialGradient>
-        <filter id="grain1" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="23" stitchTiles="stitch" result="t"/><feColorMatrix in="t" type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer></filter>
-        <filter id="sh1" x="-40%" y="-40%" width="180%" height="200%"><feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000" flood-opacity="0.55"/></filter>
+  <div class="bookWrap" style="--d:.5s" data-page-node-id="7dcAAAS0zlaCOMya8ctdca"><div class="book" data-idx="1" data-page-node-id="5DmiaoyGNVTtUgILkzDnDm">
+      <svg viewBox="0 0 120 180" xmlns="http://www.w3.org/2000/svg" data-page-node-id="e6makwy3Nahg0uPfcr0FME">
+      <defs data-page-node-id="nWCb7Uad3RAzXRBUYHqnlw">
+        <linearGradient id="cov1" x1="0" y1="0" x2="0.85" y2="1" data-page-node-id="5Q2PUwBL1ClbUynx4B7l7A"><stop offset="0" stop-color="#2c5238" data-page-node-id="5YZ9cBR6lhVw74RMBYrtxH"/><stop offset="0.5" stop-color="#17331f" data-page-node-id="J5K74sZxnq5jmS2ugGmzjd"/><stop offset="1" stop-color="#0d1f14" data-page-node-id="bKCZpL555wW7C3qFDkj3Wx"/></linearGradient>
+        <linearGradient id="spine1" x1="0" y1="0" x2="1" y2="0" data-page-node-id="UDRXva7NYey2z1F1zM6uVk"><stop offset="0" stop-color="#0a160e" data-page-node-id="jDlHNaWa4fKSIdnn4TC9se"/><stop offset="1" stop-color="#17331f" data-page-node-id="fJ8fZLTuEYRvDfGDOaIMFH"/></linearGradient>
+        <linearGradient id="gold1" x1="0" y1="0" x2="1" y2="1" data-page-node-id="QRneb23hMXkPvUiPt5Ts1k"><stop offset="0" stop-color="#e7c878" data-page-node-id="9gsrVkmG3HkJYlepmJlGXr"/><stop offset="0.5" stop-color="#a9802f" data-page-node-id="MrSx0ngtS8MEpuZoZgfi1Y"/><stop offset="1" stop-color="#d8b25a" data-page-node-id="hlFZ2xCznCDQmTIrBc4Jch"/></linearGradient>
+        <radialGradient id="emb1" cx="0.5" cy="0.4" r="0.65" data-page-node-id="sYrpWacOceRRpeW8f0gK8A"><stop offset="0" stop-color="#0c1a10" data-page-node-id="8ETHCQeH4DLbAdQt5U3oUo"/><stop offset="1" stop-color="#040a06" data-page-node-id="iSUdG543Fn3RW0v9LPfX6G"/></radialGradient>
+        <filter id="grain1" x="-5%" y="-5%" width="110%" height="110%" data-page-node-id="0mzpBffBYmPHdRzHQj9FuN"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="23" stitchTiles="stitch" result="t" data-page-node-id="tARrIh3eEW9zUpIPASIxnT"/><feColorMatrix in="t" type="saturate" values="0" data-page-node-id="WOSvDqC6CgpU7EWYclb4oU"/><feComponentTransfer data-page-node-id="YVrS9PvqOhb4g1HL9931HS"><feFuncA type="linear" slope="0.45" data-page-node-id="8m5Oz4QSThgmyJ6brivguv"/></feComponentTransfer></filter>
+        <filter id="sh1" x="-40%" y="-40%" width="180%" height="200%" data-page-node-id="7lZSdUipE7YCeRe68tbAy0"><feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000" flood-opacity="0.55" data-page-node-id="hdfWpxO2Td8QQaAlxs260A"/></filter>
       </defs>
-      <g filter="url(#sh1)">
-        <rect x="100" y="14" width="9" height="152" rx="2" fill="#d8c79c"/>
-        <g stroke="#b6a877" stroke-width="0.6" opacity="0.65"><line x1="100" y1="34" x2="109" y2="34"/><line x1="100" y1="64" x2="109" y2="64"/><line x1="100" y1="94" x2="109" y2="94"/><line x1="100" y1="124" x2="109" y2="124"/><line x1="100" y1="150" x2="109" y2="150"/></g>
-        <rect x="100" y="14" width="2.4" height="152" fill="#caa24a" opacity="0.8"/>
-        <rect x="14" y="8" width="88" height="164" rx="6" fill="url(#cov1)" stroke="#06120a" stroke-width="1"/>
-        <rect x="14" y="8" width="88" height="164" rx="6" filter="url(#grain1)" opacity="0.32"/>
-        <rect x="14" y="8" width="88" height="164" rx="6" filter="url(#grungeStain)" opacity="0.55"/>
-        <g fill="#000" opacity="0.10">
-          <ellipse cx="42" cy="142" rx="14" ry="9"/>
-          <ellipse cx="90" cy="48" rx="9" ry="6"/>
-          <ellipse cx="55" cy="100" rx="17" ry="11"/>
-          <ellipse cx="28" cy="70" rx="8" ry="6"/>
+      <g filter="url(#sh1)" data-page-node-id="r7stUqTJAShsT0zHC3DWjv">
+        <rect x="100" y="14" width="9" height="152" rx="2" fill="#d8c79c" data-page-node-id="HKZ87uYMcojvhZuYXB5u95"/>
+        <g stroke="#b6a877" stroke-width="0.6" opacity="0.65" data-page-node-id="2nXuF5FDq9qqJ5pkZiUQAd"><line x1="100" y1="34" x2="109" y2="34" data-page-node-id="v5BX7bZZBrFUzk3HshlBtl"/><line x1="100" y1="64" x2="109" y2="64" data-page-node-id="zHCep8X8f6ZVD9aSc0J4wR"/><line x1="100" y1="94" x2="109" y2="94" data-page-node-id="UM4wdDUsQSlAiARwYFIkOR"/><line x1="100" y1="124" x2="109" y2="124" data-page-node-id="K0sgvOav5ABCeJLrJIUaKR"/><line x1="100" y1="150" x2="109" y2="150" data-page-node-id="hcdxF5QhW02UlN0DDTnkn3"/></g>
+        <rect x="100" y="14" width="2.4" height="152" fill="#caa24a" opacity="0.8" data-page-node-id="4qqXZNM7qbq0OCre5l02ja"/>
+        <rect x="14" y="8" width="88" height="164" rx="6" fill="url(#cov1)" stroke="#06120a" stroke-width="1" data-page-node-id="Vg7Onyl92I00Z9bmm8J4Fj"/>
+        <rect x="14" y="8" width="88" height="164" rx="6" filter="url(#grain1)" opacity="0.32" data-page-node-id="YsbXBxgM4UagAXcMfzpHh2"/>
+        <rect x="14" y="8" width="88" height="164" rx="6" filter="url(#grungeStain)" opacity="0.55" data-page-node-id="F0KDrw81uRkAwUTmIAufHK"/>
+        <g fill="#000" opacity="0.10" data-page-node-id="OFPHpQfTN6Lj4AFRfIgbE0">
+          <ellipse cx="42" cy="142" rx="14" ry="9" data-page-node-id="BYI69vqLxR18nFlxMfaziy"/>
+          <ellipse cx="90" cy="48" rx="9" ry="6" data-page-node-id="46WrCl6RExVxLuCWosZm45"/>
+          <ellipse cx="55" cy="100" rx="17" ry="11" data-page-node-id="6eAXTEkWZnN904sFDUL3uJ"/>
+          <ellipse cx="28" cy="70" rx="8" ry="6" data-page-node-id="zsNqVcdczmAZwdUrryfeoV"/>
         </g>
-        <g fill="#13261a" opacity="0.22">
-          <ellipse cx="30" cy="92" rx="6" ry="4"/>
-          <ellipse cx="86" cy="128" rx="7" ry="5"/>
-          <ellipse cx="64" cy="156" rx="10" ry="5"/>
+        <g fill="#13261a" opacity="0.22" data-page-node-id="4EEg8vkfPuwegrpC8BBigc">
+          <ellipse cx="30" cy="92" rx="6" ry="4" data-page-node-id="U42ym8z3clTetYiTi0YAF6"/>
+          <ellipse cx="86" cy="128" rx="7" ry="5" data-page-node-id="5E0TVkk5a611wQWwPAhUL6"/>
+          <ellipse cx="64" cy="156" rx="10" ry="5" data-page-node-id="dBp3wGqB1EG2t5SFRBau7M"/>
         </g>
-        <g stroke="#000" stroke-opacity="0.15" stroke-width="0.6" fill="none" stroke-linecap="round">
-          <path d="M22,36 L46,54"/><path d="M30,154 L72,136"/><path d="M88,26 L96,94"/><path d="M20,108 L52,98"/><path d="M40,150 L44,118"/>
+        <g stroke="#000" stroke-opacity="0.15" stroke-width="0.6" fill="none" stroke-linecap="round" data-page-node-id="JSYoCDmivz3xaPxPRhDxid">
+          <path d="M22,36 L46,54" data-page-node-id="OJIrrLyUXQdtoMnOdogeCu"/><path d="M30,154 L72,136" data-page-node-id="2Dkq8mZ6Gq0FJTzFTYFeUP"/><path d="M88,26 L96,94" data-page-node-id="bP8x0s121sB4feH8BLW6Zv"/><path d="M20,108 L52,98" data-page-node-id="tupDwqs8NJdjHZR0oajx2B"/><path d="M40,150 L44,118" data-page-node-id="DNt0qK6hKGTRzpDCiMNfXb"/>
         </g>
-        <g stroke="#fff" stroke-opacity="0.05" stroke-width="0.5" fill="none">
-          <path d="M42,20 L60,72"/><path d="M24,126 L54,114"/><path d="M70,150 L88,140"/>
+        <g stroke="#fff" stroke-opacity="0.05" stroke-width="0.5" fill="none" data-page-node-id="nERpF4jIQXBt6Tl6qOuCNX">
+          <path d="M42,20 L60,72" data-page-node-id="YjpHKshGj3uK8t1kGOmEqb"/><path d="M24,126 L54,114" data-page-node-id="kQjPLsD5c2PveQzcVzrFGD"/><path d="M70,150 L88,140" data-page-node-id="gVU40oYmDDNeZL98YWCHLw"/>
         </g>
-        <rect x="14" y="8" width="88" height="164" rx="6" fill="url(#grungeVig)"/>
-        <path d="M16,13 Q60,9 100,14 L100,30 Q60,24 16,30 Z" fill="#ffffff" opacity="0.05"/>
-        <ellipse cx="30" cy="20" rx="9" ry="4" fill="#000" opacity="0.10"/>
-        <ellipse cx="92" cy="160" rx="10" ry="5" fill="#000" opacity="0.12"/>
-        <ellipse cx="82" cy="42" rx="5" ry="3" fill="#fff" opacity="0.05"/>
-        <rect x="14" y="8" width="15" height="164" rx="6" fill="url(#spine1)"/>
-        <g stroke="#06120a" stroke-width="1.4" opacity="0.8"><line x1="14" y1="40" x2="29" y2="40"/><line x1="14" y1="64" x2="29" y2="64"/><line x1="14" y1="116" x2="29" y2="116"/><line x1="14" y1="140" x2="29" y2="140"/></g>
-        <g stroke="url(#gold1)" stroke-width="0.8" opacity="0.7"><line x1="15" y1="22" x2="28" y2="22"/><line x1="15" y1="156" x2="28" y2="156"/></g>
-        <rect x="32" y="16" width="68" height="148" rx="4" fill="none" stroke="url(#gold1)" stroke-width="1.6" opacity="0.92"/>
-        <rect x="35" y="19" width="62" height="142" rx="3" fill="none" stroke="url(#gold1)" stroke-width="0.5" opacity="0.5"/>
-        <circle cx="66" cy="62" r="19" fill="url(#emb1)" stroke="url(#gold1)" stroke-width="1.4"/>
-        <circle cx="66" cy="62" r="15" fill="none" stroke="url(#gold1)" stroke-width="0.5" opacity="0.55"/>
-        <polygon points="66,51 68.6,58.4 76.5,58.6 70.2,63.4 72.5,70.9 66,66.4 59.5,70.9 61.8,63.4 55.5,58.6 63.4,58.4" fill="url(#gold1)"/>
-        <rect x="40" y="118" width="52" height="30" rx="4" fill="#0a160e" stroke="url(#gold1)" stroke-width="1" opacity="0.95"/>
-        <text x="66" y="138.4" text-anchor="middle" font-size="13" font-family="serif" letter-spacing="3" fill="url(#gold1)" font-weight="bold">占星</text>
-        <text x="66.6" y="139.2" text-anchor="middle" font-size="13" font-family="serif" letter-spacing="3" fill="#040a06" font-weight="bold">占星</text>
+        <rect x="14" y="8" width="88" height="164" rx="6" fill="url(#grungeVig)" data-page-node-id="mO4Log90rHC99TcTI6k8Np"/>
+        <path d="M16,13 Q60,9 100,14 L100,30 Q60,24 16,30 Z" fill="#ffffff" opacity="0.05" data-page-node-id="pFGjPkV8unXqF4cGegkffx"/>
+        <ellipse cx="30" cy="20" rx="9" ry="4" fill="#000" opacity="0.10" data-page-node-id="8lpsOTPCBzDsJkxBImiRf8"/>
+        <ellipse cx="92" cy="160" rx="10" ry="5" fill="#000" opacity="0.12" data-page-node-id="czMnNR6NgA3b0fAPm2UA3g"/>
+        <ellipse cx="82" cy="42" rx="5" ry="3" fill="#fff" opacity="0.05" data-page-node-id="EOYA0ehYBnNWE35TV3XbeW"/>
+        <rect x="14" y="8" width="15" height="164" rx="6" fill="url(#spine1)" data-page-node-id="gC073QKHDEbk7iwtWQPk8S"/>
+        <g stroke="#06120a" stroke-width="1.4" opacity="0.8" data-page-node-id="o9REoB2pV5axdBxnPVJ9SG"><line x1="14" y1="40" x2="29" y2="40" data-page-node-id="kXZOnmIgRa3RCGBt06y5XA"/><line x1="14" y1="64" x2="29" y2="64" data-page-node-id="wyfaDaO6Hmj4VbpFoyvOD3"/><line x1="14" y1="116" x2="29" y2="116" data-page-node-id="YbetspRczv2MMLsFJFCAeb"/><line x1="14" y1="140" x2="29" y2="140" data-page-node-id="7npauYFGxmu7zkSVpAQ0tE"/></g>
+        <g stroke="url(#gold1)" stroke-width="0.8" opacity="0.7" data-page-node-id="HOrzd6xJLgT1E4aiBTgG1l"><line x1="15" y1="22" x2="28" y2="22" data-page-node-id="1djmH8adofbDqUalGy30KC"/><line x1="15" y1="156" x2="28" y2="156" data-page-node-id="dHDDDpXzaJb3btfv4d8qoW"/></g>
+        <rect x="32" y="16" width="68" height="148" rx="4" fill="none" stroke="url(#gold1)" stroke-width="1.6" opacity="0.92" data-page-node-id="kSmqHzo7fAd0RzskBEG98a"/>
+        <rect x="35" y="19" width="62" height="142" rx="3" fill="none" stroke="url(#gold1)" stroke-width="0.5" opacity="0.5" data-page-node-id="4csLjHBIRCL7aqndpcbh51"/>
+        <circle cx="66" cy="62" r="19" fill="url(#emb1)" stroke="url(#gold1)" stroke-width="1.4" data-page-node-id="q8nTcGedpVLpBipaOsYoZf"/>
+        <circle cx="66" cy="62" r="15" fill="none" stroke="url(#gold1)" stroke-width="0.5" opacity="0.55" data-page-node-id="VOgjd5K0nBCqEGvocHOx2a"/>
+        <polygon points="66,51 68.6,58.4 76.5,58.6 70.2,63.4 72.5,70.9 66,66.4 59.5,70.9 61.8,63.4 55.5,58.6 63.4,58.4" fill="url(#gold1)" data-page-node-id="leE9MK9ZnceyW7bt1IBL9k"/>
+        <rect x="40" y="118" width="52" height="30" rx="4" fill="#0a160e" stroke="url(#gold1)" stroke-width="1" opacity="0.95" data-page-node-id="evJZAX7gxAlYnpMu1OI6Rx"/>
+        <text x="66" y="138.4" text-anchor="middle" font-size="13" font-family="serif" letter-spacing="3" fill="url(#gold1)" font-weight="bold" data-page-node-id="WdXxuGJtrcbcXyFGQBoNLC">占星</text>
+        <text x="66.6" y="139.2" text-anchor="middle" font-size="13" font-family="serif" letter-spacing="3" fill="#040a06" font-weight="bold" data-page-node-id="LCJRRXJtdCSyE78X7UqRyQ">占星</text>
       </g>
     </svg>
-    <div class="label">占星</div>
+    <div class="label" data-page-node-id="ds9gSUJUTMmBb3JlIBeSXi">占星</div>
   </div></div>
-  <div class="bookWrap" style="--d:.85s"><div class="book" data-idx="2">
-      <svg viewBox="0 0 120 180" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="cov2" x1="0" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#5a4426"/><stop offset="0.5" stop-color="#33240f"/><stop offset="1" stop-color="#1b120a"/></linearGradient>
-        <linearGradient id="spine2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#150e06"/><stop offset="1" stop-color="#33240f"/></linearGradient>
-        <linearGradient id="gold2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e7c878"/><stop offset="0.5" stop-color="#a9802f"/><stop offset="1" stop-color="#d8b25a"/></linearGradient>
-        <radialGradient id="emb2" cx="0.5" cy="0.4" r="0.65"><stop offset="0" stop-color="#231708"/><stop offset="1" stop-color="#0a0603"/></radialGradient>
-        <filter id="grain2" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="37" stitchTiles="stitch" result="t"/><feColorMatrix in="t" type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer></filter>
-        <filter id="sh2" x="-40%" y="-40%" width="180%" height="200%"><feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000" flood-opacity="0.55"/></filter>
+  <div class="bookWrap" style="--d:.85s" data-page-node-id="xIk8j3QjBtzV3Oyd52OTZ2"><div class="book" data-idx="2" data-page-node-id="0eote4OY1VlZHPghdPJxGJ">
+      <svg viewBox="0 0 120 180" xmlns="http://www.w3.org/2000/svg" data-page-node-id="poWuaamo23qG0xGE2a6NQP">
+      <defs data-page-node-id="dtDY8a8m4Ri8ENaSOLcmPi">
+        <linearGradient id="cov2" x1="0" y1="0" x2="0.85" y2="1" data-page-node-id="IhdMDGogQDiEFJcD7TSIFH"><stop offset="0" stop-color="#5a4426" data-page-node-id="wTAyPQOZcpAYY4ArN6gf46"/><stop offset="0.5" stop-color="#33240f" data-page-node-id="MLEEkOaluQM4IUfmrSL5J4"/><stop offset="1" stop-color="#1b120a" data-page-node-id="PsxvJ2rQ39kPGQQA0adOUR"/></linearGradient>
+        <linearGradient id="spine2" x1="0" y1="0" x2="1" y2="0" data-page-node-id="vwAzLDVOI6KPE121BNKhHt"><stop offset="0" stop-color="#150e06" data-page-node-id="Snq21ruSB3J8p7P91u3rFN"/><stop offset="1" stop-color="#33240f" data-page-node-id="GdSHekcsUYDJifxjrIiJWH"/></linearGradient>
+        <linearGradient id="gold2" x1="0" y1="0" x2="1" y2="1" data-page-node-id="QeNvPaBrkuFNaFX3jCu6P3"><stop offset="0" stop-color="#e7c878" data-page-node-id="aIw0x5yMIogPWmlkpiUuJu"/><stop offset="0.5" stop-color="#a9802f" data-page-node-id="s0RIMSdxtVf4ECTUpeciwP"/><stop offset="1" stop-color="#d8b25a" data-page-node-id="5EBeM619qF2KVuHlhQvcKj"/></linearGradient>
+        <radialGradient id="emb2" cx="0.5" cy="0.4" r="0.65" data-page-node-id="HKUjtLNVf3R0dRJEWXQ3mo"><stop offset="0" stop-color="#231708" data-page-node-id="gez0Ne73KNQBP6BHMdM0zH"/><stop offset="1" stop-color="#0a0603" data-page-node-id="98xr2oclt2PvwOJJep159h"/></radialGradient>
+        <filter id="grain2" x="-5%" y="-5%" width="110%" height="110%" data-page-node-id="zfwvJ6T8o1iq9m1jFTSXEx"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="37" stitchTiles="stitch" result="t" data-page-node-id="F1TDjCsKHmcC8wntNooEfV"/><feColorMatrix in="t" type="saturate" values="0" data-page-node-id="HNoKHIKDMxwbrNQzu5RnCH"/><feComponentTransfer data-page-node-id="RUxo4nHoq35ZFLBBYV9se7"><feFuncA type="linear" slope="0.45" data-page-node-id="tsQG4AFIotzXbkmBxfmuA5"/></feComponentTransfer></filter>
+        <filter id="sh2" x="-40%" y="-40%" width="180%" height="200%" data-page-node-id="ss3wlfPTocgbazyg2aCEa2"><feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000" flood-opacity="0.55" data-page-node-id="MyZFecUTlPCM8gkWNEwLam"/></filter>
       </defs>
-      <g filter="url(#sh2)">
-        <rect x="100" y="14" width="9" height="152" rx="2" fill="#d8c79c"/>
-        <g stroke="#b6a877" stroke-width="0.6" opacity="0.65"><line x1="100" y1="34" x2="109" y2="34"/><line x1="100" y1="64" x2="109" y2="64"/><line x1="100" y1="94" x2="109" y2="94"/><line x1="100" y1="124" x2="109" y2="124"/><line x1="100" y1="150" x2="109" y2="150"/></g>
-        <rect x="100" y="14" width="2.4" height="152" fill="#caa24a" opacity="0.8"/>
-        <rect x="14" y="8" width="88" height="164" rx="6" fill="url(#cov2)" stroke="#0f0a05" stroke-width="1"/>
-        <rect x="14" y="8" width="88" height="164" rx="6" filter="url(#grain2)" opacity="0.32"/>
-        <rect x="14" y="8" width="88" height="164" rx="6" filter="url(#grungeStain)" opacity="0.55"/>
-        <g fill="#000" opacity="0.10">
-          <ellipse cx="42" cy="142" rx="14" ry="9"/>
-          <ellipse cx="90" cy="48" rx="9" ry="6"/>
-          <ellipse cx="55" cy="100" rx="17" ry="11"/>
-          <ellipse cx="28" cy="70" rx="8" ry="6"/>
+      <g filter="url(#sh2)" data-page-node-id="MS2XMAZGzShMiRBgXLgXC1">
+        <rect x="100" y="14" width="9" height="152" rx="2" fill="#d8c79c" data-page-node-id="LSXiMHC5GHHhrDkbXmcuJ6"/>
+        <g stroke="#b6a877" stroke-width="0.6" opacity="0.65" data-page-node-id="UFSmBlquGKBlrut4dUYSvM"><line x1="100" y1="34" x2="109" y2="34" data-page-node-id="jrfV3U6BZi3Y3yeR8m4tra"/><line x1="100" y1="64" x2="109" y2="64" data-page-node-id="CApXmqSWOvXl1QX9sfTjlQ"/><line x1="100" y1="94" x2="109" y2="94" data-page-node-id="NzP7zrcJyvs6z6KFnPtXGw"/><line x1="100" y1="124" x2="109" y2="124" data-page-node-id="EC2bDaD1sSH7SYOAWIN0lp"/><line x1="100" y1="150" x2="109" y2="150" data-page-node-id="uqC3XCpPIEHPuCKFYErIun"/></g>
+        <rect x="100" y="14" width="2.4" height="152" fill="#caa24a" opacity="0.8" data-page-node-id="cjGoLGL6LP0AJdFqMfWvmn"/>
+        <rect x="14" y="8" width="88" height="164" rx="6" fill="url(#cov2)" stroke="#0f0a05" stroke-width="1" data-page-node-id="a1Q7GaNq982AMHZCMLaBNa"/>
+        <rect x="14" y="8" width="88" height="164" rx="6" filter="url(#grain2)" opacity="0.32" data-page-node-id="EgtUyzCDApvVUlhQUedC2u"/>
+        <rect x="14" y="8" width="88" height="164" rx="6" filter="url(#grungeStain)" opacity="0.55" data-page-node-id="WTP2YyVkv7jxaWXprKRuEa"/>
+        <g fill="#000" opacity="0.10" data-page-node-id="kZnhZxRHGfDOEP65ntnFY9">
+          <ellipse cx="42" cy="142" rx="14" ry="9" data-page-node-id="iEDBiFGiyBGfCw1Ft8wyEx"/>
+          <ellipse cx="90" cy="48" rx="9" ry="6" data-page-node-id="KDyaSTjwuhrVRF0jcYNqm5"/>
+          <ellipse cx="55" cy="100" rx="17" ry="11" data-page-node-id="Sw1UjgSA2zNYntlwqrZu61"/>
+          <ellipse cx="28" cy="70" rx="8" ry="6" data-page-node-id="se9D8eNe6FExHSn1BT0gi6"/>
         </g>
-        <g fill="#2a1d0c" opacity="0.22">
-          <ellipse cx="30" cy="92" rx="6" ry="4"/>
-          <ellipse cx="86" cy="128" rx="7" ry="5"/>
-          <ellipse cx="64" cy="156" rx="10" ry="5"/>
+        <g fill="#2a1d0c" opacity="0.22" data-page-node-id="lBKrdbYDdhAhB3cjvdWDG4">
+          <ellipse cx="30" cy="92" rx="6" ry="4" data-page-node-id="xdxPguX47IYnOGddjbCLuK"/>
+          <ellipse cx="86" cy="128" rx="7" ry="5" data-page-node-id="YmO7Ol69v1d0eUrHJ0vADv"/>
+          <ellipse cx="64" cy="156" rx="10" ry="5" data-page-node-id="NpK9InV1YqAGCQOaPUJ8T9"/>
         </g>
-        <g stroke="#000" stroke-opacity="0.15" stroke-width="0.6" fill="none" stroke-linecap="round">
-          <path d="M22,36 L46,54"/><path d="M30,154 L72,136"/><path d="M88,26 L96,94"/><path d="M20,108 L52,98"/><path d="M40,150 L44,118"/>
+        <g stroke="#000" stroke-opacity="0.15" stroke-width="0.6" fill="none" stroke-linecap="round" data-page-node-id="9ArqHZ0ta8zqQBRCQMxiwd">
+          <path d="M22,36 L46,54" data-page-node-id="4B8D7F7LKSdwubzLsEEJBA"/><path d="M30,154 L72,136" data-page-node-id="dm3t2hIiDhz2TnB8Gggkum"/><path d="M88,26 L96,94" data-page-node-id="DmtA8HM2G1CqUKQZwQrHOF"/><path d="M20,108 L52,98" data-page-node-id="7nCFwlySxxKgfhI2t79hq8"/><path d="M40,150 L44,118" data-page-node-id="fn3HQIWWYQsGY1cPCQYACk"/>
         </g>
-        <g stroke="#fff" stroke-opacity="0.05" stroke-width="0.5" fill="none">
-          <path d="M42,20 L60,72"/><path d="M24,126 L54,114"/><path d="M70,150 L88,140"/>
+        <g stroke="#fff" stroke-opacity="0.05" stroke-width="0.5" fill="none" data-page-node-id="7qT5AiN7DRe2Z5LJ4qqk6j">
+          <path d="M42,20 L60,72" data-page-node-id="eLc8T6JhKfltCpbVakC7s3"/><path d="M24,126 L54,114" data-page-node-id="tmG0zcHW61zZPiYa98wEGj"/><path d="M70,150 L88,140" data-page-node-id="Y0gT0Qat60tn4mtz25AlCB"/>
         </g>
-        <rect x="14" y="8" width="88" height="164" rx="6" fill="url(#grungeVig)"/>
-        <path d="M16,13 Q60,9 100,14 L100,30 Q60,24 16,30 Z" fill="#ffffff" opacity="0.05"/>
-        <ellipse cx="30" cy="20" rx="9" ry="4" fill="#000" opacity="0.10"/>
-        <ellipse cx="92" cy="160" rx="10" ry="5" fill="#000" opacity="0.12"/>
-        <ellipse cx="82" cy="42" rx="5" ry="3" fill="#fff" opacity="0.05"/>
-        <rect x="14" y="8" width="15" height="164" rx="6" fill="url(#spine2)"/>
-        <g stroke="#0f0a05" stroke-width="1.4" opacity="0.8"><line x1="14" y1="40" x2="29" y2="40"/><line x1="14" y1="64" x2="29" y2="64"/><line x1="14" y1="116" x2="29" y2="116"/><line x1="14" y1="140" x2="29" y2="140"/></g>
-        <g stroke="url(#gold2)" stroke-width="0.8" opacity="0.7"><line x1="15" y1="22" x2="28" y2="22"/><line x1="15" y1="156" x2="28" y2="156"/></g>
-        <rect x="32" y="16" width="68" height="148" rx="4" fill="none" stroke="url(#gold2)" stroke-width="1.6" opacity="0.92"/>
-        <rect x="35" y="19" width="62" height="142" rx="3" fill="none" stroke="url(#gold2)" stroke-width="0.5" opacity="0.5"/>
-        <circle cx="66" cy="62" r="19" fill="url(#emb2)" stroke="url(#gold2)" stroke-width="1.4"/>
-        <circle cx="66" cy="62" r="15" fill="none" stroke="url(#gold2)" stroke-width="0.5" opacity="0.55"/>
-        <g stroke="url(#gold2)" stroke-width="1.6" stroke-linecap="round">
-          <line x1="74.5" y1="62" x2="81" y2="62"/><line x1="72" y1="68" x2="76.6" y2="72.6"/><line x1="66" y1="70.5" x2="66" y2="77"/><line x1="60" y1="68" x2="55.4" y2="72.6"/><line x1="57.5" y1="62" x2="51" y2="62"/><line x1="60" y1="56" x2="55.4" y2="51.4"/><line x1="66" y1="53.5" x2="66" y2="47"/><line x1="72" y1="56" x2="76.6" y2="51.4"/>
+        <rect x="14" y="8" width="88" height="164" rx="6" fill="url(#grungeVig)" data-page-node-id="cU56r1Ucc1EZaXqnWCHl3z"/>
+        <path d="M16,13 Q60,9 100,14 L100,30 Q60,24 16,30 Z" fill="#ffffff" opacity="0.05" data-page-node-id="0t59WV9hngMpfU2uEbuFC6"/>
+        <ellipse cx="30" cy="20" rx="9" ry="4" fill="#000" opacity="0.10" data-page-node-id="FNWSNNDrrC26mVU9pUbWE8"/>
+        <ellipse cx="92" cy="160" rx="10" ry="5" fill="#000" opacity="0.12" data-page-node-id="RotNVWIiNprbFpURYpnMUb"/>
+        <ellipse cx="82" cy="42" rx="5" ry="3" fill="#fff" opacity="0.05" data-page-node-id="69X1DJ4u5SUm4CrowJACTy"/>
+        <rect x="14" y="8" width="15" height="164" rx="6" fill="url(#spine2)" data-page-node-id="ZOGTcOyH4wHj6sHnpcElpG"/>
+        <g stroke="#0f0a05" stroke-width="1.4" opacity="0.8" data-page-node-id="0wnKroYkJrRleoZYAGL4Ag"><line x1="14" y1="40" x2="29" y2="40" data-page-node-id="Axuvh63P2Xa6P17FzReHR6"/><line x1="14" y1="64" x2="29" y2="64" data-page-node-id="DQZMVEsJDCmQwpp4iFXkRa"/><line x1="14" y1="116" x2="29" y2="116" data-page-node-id="NBM4IqGEXJH8qQ266V5yMD"/><line x1="14" y1="140" x2="29" y2="140" data-page-node-id="FRYp3y12Phk0h3DHoApeB8"/></g>
+        <g stroke="url(#gold2)" stroke-width="0.8" opacity="0.7" data-page-node-id="tvx9A7Ycn4taziZaGOJWpo"><line x1="15" y1="22" x2="28" y2="22" data-page-node-id="W7n9KbysroQgK7KGSYv89O"/><line x1="15" y1="156" x2="28" y2="156" data-page-node-id="GtRHfP6EnyeSB5WJrnrI0m"/></g>
+        <rect x="32" y="16" width="68" height="148" rx="4" fill="none" stroke="url(#gold2)" stroke-width="1.6" opacity="0.92" data-page-node-id="6SK24lhHSGwBwnYenJTwpA"/>
+        <rect x="35" y="19" width="62" height="142" rx="3" fill="none" stroke="url(#gold2)" stroke-width="0.5" opacity="0.5" data-page-node-id="pAecNtxDMAKpJN4KnfzWIi"/>
+        <circle cx="66" cy="62" r="19" fill="url(#emb2)" stroke="url(#gold2)" stroke-width="1.4" data-page-node-id="R6FXWO2tmaoPCVQq2vS65C"/>
+        <circle cx="66" cy="62" r="15" fill="none" stroke="url(#gold2)" stroke-width="0.5" opacity="0.55" data-page-node-id="glFgVNhpUbAZKh58PsoHgY"/>
+        <g stroke="url(#gold2)" stroke-width="1.6" stroke-linecap="round" data-page-node-id="hNTGixMvLc4RwgxAtzg8tC">
+          <line x1="74.5" y1="62" x2="81" y2="62" data-page-node-id="AgBMmHu6zQupCrjRAXV5ld"/><line x1="72" y1="68" x2="76.6" y2="72.6" data-page-node-id="iyB4kmit16zwgVyhZ9QaLu"/><line x1="66" y1="70.5" x2="66" y2="77" data-page-node-id="X4Q8wfGorV9TuEUJDbvBQR"/><line x1="60" y1="68" x2="55.4" y2="72.6" data-page-node-id="KGqiQl79gkI0WF4gSdAyqH"/><line x1="57.5" y1="62" x2="51" y2="62" data-page-node-id="T5z9HHsXqN9RQAhmq285NR"/><line x1="60" y1="56" x2="55.4" y2="51.4" data-page-node-id="V5AkN1aAyt9JbSTxMVnq6d"/><line x1="66" y1="53.5" x2="66" y2="47" data-page-node-id="ewlBKlRIbsty0M5R0AkSlr"/><line x1="72" y1="56" x2="76.6" y2="51.4" data-page-node-id="mbiBIZHRsCoD1sfwcgcL8Z"/>
         </g>
-        <circle cx="66" cy="62" r="6.5" fill="url(#gold2)"/>
-        <rect x="40" y="118" width="52" height="30" rx="4" fill="#1a120a" stroke="url(#gold2)" stroke-width="1" opacity="0.95"/>
-        <text x="66" y="138.4" text-anchor="middle" font-size="13" font-family="serif" letter-spacing="3" fill="url(#gold2)" font-weight="bold">塔罗</text>
-        <text x="66.6" y="139.2" text-anchor="middle" font-size="13" font-family="serif" letter-spacing="3" fill="#0a0603" font-weight="bold">塔罗</text>
+        <circle cx="66" cy="62" r="6.5" fill="url(#gold2)" data-page-node-id="p1ifcjBMLJ4qm46Aj8Ijuy"/>
+        <rect x="40" y="118" width="52" height="30" rx="4" fill="#1a120a" stroke="url(#gold2)" stroke-width="1" opacity="0.95" data-page-node-id="TrNBTGseZDxXLant0YotNi"/>
+        <text x="66" y="138.4" text-anchor="middle" font-size="13" font-family="serif" letter-spacing="3" fill="url(#gold2)" font-weight="bold" data-page-node-id="SMO5OvIQUdl7yADr9l7uBX">塔罗</text>
+        <text x="66.6" y="139.2" text-anchor="middle" font-size="13" font-family="serif" letter-spacing="3" fill="#0a0603" font-weight="bold" data-page-node-id="kZL4HWAVAMxoACzoPfT3Hp">塔罗</text>
       </g>
     </svg>
-    <div class="label">塔罗</div>
+    <div class="label" data-page-node-id="6ruOZDGwmGPlFeLEz9HDlz">塔罗</div>
   </div></div>
-  <div class="books-cap">选择一册典籍 · 开启一段未知</div>
+  <div class="books-cap" data-page-node-id="V9aymVUMr0wGpltlW2pAO4">选择一册典籍 · 开启一段未知</div>
 </div>
-<div id="funcpage">
-  <h1 id="fpTitle">功能一</h1>
-  <p id="fpDesc">功能一的占位说明。后续接入真实功能时，替换此面板即可。</p>
-  <button class="back" id="fpBack">返回书架</button>
-  <div id="tarotPanel">
-    <div class="tp-controls">
-      <div class="tp-select" id="tpSelect">
-        <button class="tp-select-btn" id="tpSelectBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
-          <span class="tp-select-label" id="tpSelectLabel">选择牌阵</span>
-          <span class="tp-select-caret">▾</span>
+<div id="funcpage" data-page-node-id="HBXMXUyicnFkuf1n1t6zyo">
+  <h1 id="fpTitle" data-page-node-id="V34lMdV9Kybe9C29yYELfH">功能一</h1>
+  <p id="fpDesc" data-page-node-id="s7jkU0gzvdUehQNifDwsyI">功能一的占位说明。后续接入真实功能时，替换此面板即可。</p>
+  <button class="back" id="fpBack" data-page-node-id="kmwgsbAFV7i3HORCo7rhqv">返回书架</button>
+  <div id="baziPanel" data-page-node-id="0oprK38m6I0759J1kA6HRU">
+    <div class="bz-form" data-page-node-id="09WxHFtLs93snCjCvZGrX3">
+      <div class="bz-field" data-page-node-id="RFGSJ7qjvjOerFV1fpxWaU">
+        <label data-page-node-id="9yCkzCHNGlMsjmt0zurd1f">公历生日</label>
+        <input type="date" id="bzDate" min="1900-01-01" max="2100-12-31" data-page-node-id="v5i8F36PRt9Jknk2vpXXD1">
+      </div>
+      <div class="bz-field" data-page-node-id="hDBVmBiSBHJI4IALjyEDNI">
+        <label data-page-node-id="uD5bwC5zRT7qVY2bZSXuOe">出生时辰</label>
+        <select id="bzHour" data-page-node-id="nh2T0hE3rlS5noK9WGoBEV">
+          <option value="0" data-page-node-id="Ny4YTmqs0Z6QjZDQrEC30I">子时 23–01</option>
+          <option value="2" data-page-node-id="hoR8PI17zr4AHwhcP4Cs05">丑时 01–03</option>
+          <option value="4" data-page-node-id="IwEyhuvyBZEBHTFjzzvKmo">寅时 03–05</option>
+          <option value="6" data-page-node-id="614kMsxOaeLAt6dj4fYHNe">卯时 05–07</option>
+          <option value="8" data-page-node-id="7f5kVE7u9qIXdRhGXr5Bx3">辰时 07–09</option>
+          <option value="10" data-page-node-id="4hRBRjgFGq9vUM6HX3WRAN">巳时 09–11</option>
+          <option value="12" selected data-page-node-id="GJYh25zpvPLJYxHcWV2VJR">午时 11–13</option>
+          <option value="14" data-page-node-id="YHLCl2EuyoEOwauibYEPQZ">未时 13–15</option>
+          <option value="16" data-page-node-id="DYl66nbNho7R2E794aRfLn">申时 15–17</option>
+          <option value="18" data-page-node-id="MvS7QGHCYVuaDQZdC26N7w">酉时 17–19</option>
+          <option value="20" data-page-node-id="UgINJqbo8xGM8b4uT70OoM">戌时 19–21</option>
+          <option value="22" data-page-node-id="3TCL09V4aHaIivIdxGAkIT">亥时 21–23</option>
+        </select>
+      </div>
+      <div class="bz-field" data-page-node-id="ibQZULZINCt0bUD98EL0CT">
+        <label data-page-node-id="2kBi5IyXveGAdDDe8slGR5">性别</label>
+        <select id="bzSex" data-page-node-id="yjEqnP6MtoB8k7gNLkqgh6"><option value="男" data-page-node-id="WpKE8fldDfpkRrn2zwZRpA">男</option><option value="女" data-page-node-id="mEQUValzco9cU4YQnxnipC">女</option><option value="" data-page-node-id="Bo4xgbVvkPNlt0gNEuEMLe">不便说</option></select>
+      </div>
+      <div class="bz-field" data-page-node-id="bCLFNLrmSWPpiAv3otw6qY">
+        <label data-page-node-id="X8f4TmJHQwPuPjt7IWqFB8">出生地（真太阳时校正）</label>
+        <select id="bzCity" data-page-node-id="989Lm80DqogCHiZVm540Xv">
+          <option value="" data-page-node-id="IR0MgVd5Ve9MbJrBAmDlI7">不校正 · 按北京时间</option>
+          <option value="116.41" data-page-node-id="b3xBJSP7Qi5GenSxPZXsQf">北京</option>
+          <option value="121.47" data-page-node-id="ZPIr8Mrpgo0RvsCMenQ74e">上海</option>
+          <option value="113.26" data-page-node-id="1CBN26b56T6ZZ6u034tANh">广州</option>
+          <option value="114.06" data-page-node-id="l8zGRbc1IByP1l3MyooXeu">深圳</option>
+          <option value="104.07" data-page-node-id="nJ8UZZ78sOlG2n1UXUYhAk">成都</option>
+          <option value="106.55" data-page-node-id="QbOlFaToOTrRUu9H11GOhS">重庆</option>
+          <option value="108.94" data-page-node-id="gIS07OAL3MG8Ty4IqnCKgK">西安</option>
+          <option value="120.15" data-page-node-id="NA4flyVJEatR4yHpLyG6Tg">杭州</option>
+          <option value="118.80" data-page-node-id="y8NEzjHbxXga7UWTYfEnew">南京</option>
+          <option value="114.31" data-page-node-id="qLVSelb2AbUHUTOLTa1OqS">武汉</option>
+          <option value="117.20" data-page-node-id="OAaRwRv2KkGkcQgO7rMWyY">天津</option>
+          <option value="123.43" data-page-node-id="lHr3yhMbkQ8PYpCKjiVitz">沈阳</option>
+          <option value="126.53" data-page-node-id="Fpesh2IETeNG4ox3F1wECJ">哈尔滨</option>
+          <option value="102.83" data-page-node-id="KvqpJajomzK6Ntvp4aGnUG">昆明</option>
+          <option value="91.11" data-page-node-id="aS6YZypbaemoX1wxhUS672">拉萨</option>
+          <option value="87.62" data-page-node-id="eu9Mj7TkOCofYdERbckLzy">乌鲁木齐</option>
+          <option value="114.17" data-page-node-id="w6e31s8vsph8CSAChsh2F5">中国香港</option>
+          <option value="121.56" data-page-node-id="S2trcOAHGK0L8QGdhzaVa0">中国台北</option>
+        </select>
+      </div>
+      <button class="tp-btn" id="bzGo" data-page-node-id="hUxva7oqMmjVxmWuyXHFAn">✦ 排盘</button>
+    </div>
+    <div class="bz-info" id="bzInfo" data-page-node-id="4zVHER3uFBy1hh1KSDWESu"></div>
+    <div id="bzResult" data-page-node-id="rVbp2Ms6ZQdCYX1pmsW7Gh"></div>
+  </div>
+  <div id="tarotPanel" data-page-node-id="qwXtWT7xbCF8QujQarPiVY">
+    <div class="tp-controls" data-page-node-id="T9UzFCCmKUCR9TlllENvVg">
+      <div class="tp-select" id="tpSelect" data-page-node-id="wBEWHur1ssq9TcZaydr1Xl">
+        <button class="tp-select-btn" id="tpSelectBtn" type="button" aria-haspopup="listbox" aria-expanded="false" data-page-node-id="7lSkoXkPiOk0hfhR6pCiup">
+          <span class="tp-select-label" id="tpSelectLabel" data-page-node-id="OSuKGzoiyi2WdBgwodjWFn">选择牌阵</span>
+          <span class="tp-select-caret" data-page-node-id="mjatLfEVvkxDxInohrHYyg">▾</span>
         </button>
-        <div class="tp-select-menu" id="tpSelectMenu" role="listbox"></div>
+        <div class="tp-select-menu" id="tpSelectMenu" role="listbox" data-page-node-id="VjY9ArcR2riBVUzXL0Ma1G"></div>
       </div>
-      <select id="tpSpread" hidden></select>
-      <button class="tp-btn" id="tpDraw">✦ 抽牌</button>
+      <select id="tpSpread" hidden data-page-node-id="bfAzV9auYq2W9N9tBacAH5"></select>
+      <button class="tp-btn" id="tpDraw" data-page-node-id="CH9rDXcGyimR4yHbtBbHkZ">✦ 抽牌</button>
     </div>
-    <div class="tp-info" id="tpInfo">选择牌阵后点击「抽牌」。</div>
-    <div class="tp-guide" id="tpGuide"></div>
-    <div id="tarotBoard"></div>
-    <div id="tpPile" class="tp-pile" aria-hidden="true">
-      <div class="pile-glow"></div>
-      <div class="pile-orbit pile-orbit--a"><span class="pile-spark"></span></div>
-      <div class="pile-orbit pile-orbit--b"><span class="pile-spark"></span></div>
-      <div class="pile-orbit pile-orbit--c"><span class="pile-spark"></span></div>
-      <div class="pile-deck">
-        <div class="pile-card" style="--i:5"></div>
-        <div class="pile-card" style="--i:4"></div>
-        <div class="pile-card" style="--i:3"></div>
-        <div class="pile-card" style="--i:2"></div>
-        <div class="pile-card" style="--i:1"></div>
-        <div class="pile-card" style="--i:0"></div>
+    <div class="tp-info" id="tpInfo" data-page-node-id="KyTix81o0XcYuZnkKynEc3">选择牌阵后点击「抽牌」。</div>
+    <div class="tp-guide" id="tpGuide" data-page-node-id="olT957V4kjEfaYoo21ybOJ"></div>
+    <div id="tarotBoard" data-page-node-id="cHsUp9Z1fQ2UFCgcBOLx7L"></div>
+    <div id="tpPile" class="tp-pile" aria-hidden="true" data-page-node-id="Yh7dwaNP3SIZuLeQPtybNQ">
+      <div class="pile-glow" data-page-node-id="Jyk0p2RW3j4EW2TSmmu6rp"></div>
+      <div class="pile-orbit pile-orbit--a" data-page-node-id="rdsVHI09hhODKbLctQ5fft"><span class="pile-spark" data-page-node-id="3nZa8UB4H479KSoV6SCyct"></span></div>
+      <div class="pile-orbit pile-orbit--b" data-page-node-id="NEWYmrXjTh1B4EbAx8rsY7"><span class="pile-spark" data-page-node-id="t3FzH7m0a67wGImUjaY3CC"></span></div>
+      <div class="pile-orbit pile-orbit--c" data-page-node-id="1VWdPBhrxp6Sm5cLQPbNS8"><span class="pile-spark" data-page-node-id="sSFo9yGcnxsXWvBOk3oHGj"></span></div>
+      <div class="pile-deck" data-page-node-id="c3fZN5CeUrqFvYNR9CNEvm">
+        <div class="pile-card" style="--i:5" data-page-node-id="mxE5lz9L88WYHjkVxciBe2"></div>
+        <div class="pile-card" style="--i:4" data-page-node-id="4nkd8mQuMFcuI7KUGwayiF"></div>
+        <div class="pile-card" style="--i:3" data-page-node-id="5vJgQvHahBZ3WXUVaCC3Ks"></div>
+        <div class="pile-card" style="--i:2" data-page-node-id="eus06Z0KZikEksPExKwVxf"></div>
+        <div class="pile-card" style="--i:1" data-page-node-id="yPs36v1wHvubqIGH0GZNdk"></div>
+        <div class="pile-card" style="--i:0" data-page-node-id="ogP0ZYQquoMbFNuChjGGd1"></div>
       </div>
     </div>
-    <div class="tp-ai" id="tpAi">
+    <div class="tp-ai" id="tpAi" data-page-node-id="QzYyZp8bAr1CPpDW6Pbs2H">
       <textarea id="tpQuestion" rows="2" placeholder="可输入你的问题，让解读更贴合（可选）"></textarea>
-      <div class="row" style="text-align:center;">
-        <button class="tp-btn" id="tpInterp">✦ 星灵解读</button>
+      <div class="row" style="text-align:center;" data-page-node-id="kQSBp8HdiSsdx1rD3484dI">
+        <button class="tp-btn" id="tpInterp" data-page-node-id="XWTuK8YrRXvl8FUA0c4lMF">✦ 星灵解读</button>
       </div>
-      <div class="tp-out" id="tpOut"></div>
+      <div class="tp-out" id="tpOut" data-page-node-id="CJj5JSp2ZiIBq3ySXkb0Xy"></div>
     </div>
   </div>
 </div>
@@ -978,7 +1075,7 @@ const fpTitle = document.getElementById('fpTitle');
 const fpDesc = document.getElementById('fpDesc');
 const NAMES = ['八字','占星','塔罗'];
 const DESCS = [
-  '八字排盘（开发中）。',
+  '八字排盘 · 输入生辰，排出四柱命盘，附五行分布、喜用神与命盘要点。',
   '占星（开发中）。',
   '塔罗牌阵 · 选择牌阵，逐张翻开，可获星灵解读。'
 ];
@@ -992,7 +1089,11 @@ function selectBook(idx){
   document.body.classList.add('func');
   document.body.classList.remove('books');
   booksEl.classList.remove('show');
-  if(idx === 2){
+  if(idx === 0){
+    fpTitle.style.display = 'none';
+    fpDesc.style.display = 'none';
+    baziPanel.classList.add('show');
+  } else if(idx === 2){
     fpTitle.style.display = 'none';
     fpDesc.style.display = 'none';
     tarotPanel.classList.add('show');
@@ -1002,6 +1103,7 @@ function selectBook(idx){
     fpTitle.style.display = '';
     fpDesc.style.display = '';
     tarotPanel.classList.remove('show');
+    baziPanel.classList.remove('show');
     fpTitle.textContent = NAMES[idx];
     fpDesc.textContent = DESCS[idx];
   }
@@ -1010,12 +1112,91 @@ function selectBook(idx){
 function backToBooks(){
   funcpage.classList.remove('show');
   tarotPanel.classList.remove('show');
+  baziPanel.classList.remove('show');
   fpTitle.style.display = '';
   fpDesc.style.display = '';
   document.body.classList.remove('func');
   booksEl.classList.add('show');
   document.body.classList.add('books');
 }
+// ===== 八字（书一）逻辑 =====
+const baziPanel = document.getElementById('baziPanel');
+const bzDate   = document.getElementById('bzDate');
+const bzHour   = document.getElementById('bzHour');
+const bzSex    = document.getElementById('bzSex');
+const bzCity   = document.getElementById('bzCity');
+const bzGo     = document.getElementById('bzGo');
+const bzInfo   = document.getElementById('bzInfo');
+const bzResult = document.getElementById('bzResult');
+const WX_COLOR = {'木':'#7fc8a9','火':'#e8836b','土':'#d9b26a','金':'#c9c4d8','水':'#7fa8d8'};
+
+function renderBazi(r){
+  const wx = r.wuxing || {};
+  const maxWx = Math.max(1, ...Object.values(wx));
+  const pillars = (r.pillars || []).map(p => {
+    const cg = (p.cangan || []).map(c => c.gan + '·' + c.god).join('<br>');
+    return '<div class="bz-pillar">' +
+      '<div class="plabel">' + p.label + '</div>' +
+      '<div class="bz-gan" style="color:' + (WX_COLOR[p.gan_wx] || '#f3ecff') + '">' + p.gan + '</div>' +
+      '<div class="bz-god">' + p.gan_god + '</div>' +
+      '<div class="bz-zhi" style="color:' + (WX_COLOR[p.zhi_wx] || '#f3ecff') + '">' + p.zhi + '</div>' +
+      '<div class="bz-god">' + p.zhi_god + '</div>' +
+      '<div class="bz-cangan">' + cg + '</div>' +
+    '</div>';
+  }).join('');
+
+  const bars = ['木', '火', '土', '金', '水'].map(e => {
+    const v = wx[e] || 0;
+    const pct = Math.max(v ? 8 : 0, Math.round(v * 100.0 / maxWx));
+    return '<div class="bz-wxrow"><span class="nm">' + e + '</span>' +
+      '<span class="bz-bar"><i style="width:' + pct + '%;background:' + WX_COLOR[e] + '"></i></span>' +
+      '<span class="ct">' + v + '</span></div>';
+  }).join('');
+
+  const ws = r.wangshuai || {};
+  const feats = (r.features || []).map(f =>
+    '<div class="fi"><div class="ft">' + f.title + '</div><div class="fd">' + f.desc + '</div></div>').join('');
+  const dh = r.diao_hou || {};
+  const dhTxt = (dh.elems && dh.elems.length) ? dh.elems.join('、') + '（' + dh.why + '）' : '—';
+  const useTxt = (r.use_gods && r.use_gods.length) ? r.use_gods.join('、') : '命局中和，宜五行均衡';
+
+  bzResult.innerHTML =
+    '<div class="bz-head">' + r.eight_chars + '　·　农历 ' + r.lunar_date + '　·　生肖 ' + r.zodiac +
+      (r.sex ? '　·　' + r.sex : '') + '</div>' +
+    '<div class="bz-pillars">' + pillars + '</div>' +
+    '<div class="bz-card"><h3>五行分布</h3>' + bars + '</div>' +
+    '<div class="bz-card"><h3>日主与喜用</h3><div class="bz-kv">' +
+      '<span><b>日主</b> ' + r.day_master + '（' + r.day_master_wx + '）</span>' +
+      '<span><b>旺衰</b> ' + ws.level + '　自党占比 ' + (ws.ratio != null ? ws.ratio : '—') + '</span>' +
+      '<span><b>喜用神</b> ' + useTxt + '</span>' +
+      '<span><b>调候参考</b> ' + dhTxt + '</span>' +
+    '</div></div>' +
+    (feats ? '<div class="bz-card"><h3>命盘要点</h3><div class="bz-feat">' + feats + '</div></div>' : '') +
+    '<div class="bz-note">' + r.note + '</div>';
+}
+
+bzGo.onclick = async () => {
+  const dv = bzDate.value;
+  if (!dv) { bzInfo.textContent = '请先选择出生日期。'; return; }
+  const p = dv.split('-').map(Number);
+  bzInfo.textContent = '正在排盘……';
+  bzResult.innerHTML = '';
+  try {
+    const r = await apiFetch('/api/bazi', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        year: p[0], month: p[1], day: p[2],
+        hour: Number(bzHour.value), minute: 0,
+        sex: bzSex.value, lon: bzCity.value
+      })
+    });
+    const j = await r.json();
+    if (j.error) { bzInfo.textContent = j.error; return; }
+    renderBazi(j);
+    bzInfo.textContent = '';
+  } catch (e) { bzInfo.textContent = '排盘失败：' + e.message; }
+};
+
 // ===== 塔罗（书三）逻辑 =====
 const tarotPanel = document.getElementById('tarotPanel');
 const tpSpread = document.getElementById('tpSpread');

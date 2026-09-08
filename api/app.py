@@ -24,8 +24,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import tarot
 import tarot_ai
+import bazi
 
-app = FastAPI(title="全自动算命机 · 塔罗 API")
+app = FastAPI(title="全自动算命机 API")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # 本文件所在目录（api/）
 ROOT_DIR = os.path.dirname(BASE_DIR)                       # 项目根目录（index.html / tarot_images 所在）
@@ -92,3 +93,27 @@ async def tarot_interpret(req: Request):
         return result
     except Exception as e:  # 网络/密钥无效等：返回结构化错误，前端友好提示
         return {"error": str(e)}
+
+
+@app.post("/api/bazi")
+async def bazi_calc(req: Request):
+    """八字排盘 + 解读（纯本地计算，零 AI、零外部依赖）。
+
+    入参：year, month, day, hour(0-23), minute, sex, lon(出生地经度，可选)
+    lon 传入时按「平太阳时」校正出生时刻。
+    """
+    data = await req.json()
+    try:
+        year = int(data.get("year"))
+        month = int(data.get("month"))
+        day = int(data.get("day"))
+        hour = int(data.get("hour", 12))
+        minute = int(data.get("minute", 0))
+        sex = data.get("sex") or None
+        lon = data.get("lon")
+        lon = float(lon) if lon not in (None, "", 0) else None
+        result = bazi.compute_bazi(year, month, day, hour, minute, sex=sex, lon=lon)
+        result["service"] = "bazi"
+        return result
+    except Exception as e:
+        return {"error": "排盘失败：%s" % e}
