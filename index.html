@@ -101,6 +101,43 @@
   .bz-feat .ft{color:#ece4ff;font-size:13.5px;}
   .bz-feat .fd{color:#b0a4d6;font-size:12.5px;line-height:1.7;margin-top:3px;}
   .bz-note{color:#8f83bb;font-size:11.5px;text-align:center;line-height:1.7;}
+  /* === L3 大运 / 流年 === */
+  .bz-l3head{display:flex;flex-wrap:wrap;gap:6px 16px;color:#b0a4d6;font-size:12px;line-height:1.8;margin:-2px 0 8px;}
+  .bz-l3head b{color:#cdb6ff;font-weight:500;}
+  .bz-dyscroll{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;}
+  .bz-dy{flex:0 0 auto;min-width:78px;scroll-snap-align:center;border:1px solid rgba(150,120,255,.25);border-radius:12px;padding:9px 6px 8px;
+    background:rgba(120,90,200,.07);display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;}
+  .bz-dy .dygz{font-size:19px;line-height:1.2;letter-spacing:.04em;}
+  .bz-dy .dygod{color:#cdb6ff;font-size:11px;}
+  .bz-dy .dyage{color:#8f83bb;font-size:10.5px;}
+  .bz-dy .dyyr{color:#7d72a8;font-size:10px;}
+  .bz-dy .dytag{margin-top:3px;font-size:10px;padding:1px 7px;border-radius:8px;border:1px solid transparent;}
+  .bz-dy.now{border-color:rgba(224,190,255,.8);background:rgba(150,100,255,.2);box-shadow:0 0 14px rgba(160,110,255,.3);}
+  .bz-dy.now::after{content:'当前';position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+    font-size:9px;color:#f0e6ff;background:rgba(140,90,240,.95);padding:1px 6px;border-radius:7px;white-space:nowrap;}
+  .t-good{color:#8fd7b3;border-color:rgba(143,215,179,.5);background:rgba(80,190,140,.14);}
+  .t-flat{color:#a99cd4;border-color:rgba(170,150,220,.35);background:rgba(140,120,200,.1);}
+  .t-bad{color:#efa98d;border-color:rgba(239,169,141,.5);background:rgba(220,120,80,.14);}
+  .bz-lynav{display:flex;align-items:center;justify-content:center;gap:12px;margin:2px 0 8px;}
+  .bz-lynav button{background:rgba(120,90,200,.16);color:#cdb6ff;border:1px solid rgba(150,120,255,.35);
+    border-radius:9px;padding:4px 12px;font-size:12px;font-family:inherit;cursor:pointer;}
+  .bz-lynav button:hover{background:rgba(150,110,255,.28);color:#f0e8ff;}
+  .bz-lynav button:disabled{opacity:.35;cursor:default;}
+  .bz-lynav .rng{color:#8f83bb;font-size:11.5px;min-width:86px;text-align:center;}
+  .bz-lylist{max-height:290px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding-right:2px;-webkit-overflow-scrolling:touch;}
+  .bz-ly{display:grid;grid-template-columns:52px 62px 1fr;gap:8px;align-items:center;padding:6px 9px;border-radius:10px;
+    border:1px solid rgba(150,120,255,.16);background:rgba(120,90,200,.05);}
+  .bz-ly .lyyr{color:#b9aee0;font-size:12px;}
+  .bz-ly .lyyr i{display:block;color:#7d72a8;font-size:10px;font-style:normal;}
+  .bz-ly .lygz{font-size:16px;letter-spacing:.03em;text-align:center;}
+  .bz-ly .lygod{color:#8f83bb;font-size:10px;text-align:center;display:block;}
+  .bz-ly .lybody{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .bz-ly .lytags{display:flex;flex-wrap:wrap;gap:5px;align-items:center;}
+  .bz-ly .lytag{font-size:10px;padding:1px 7px;border-radius:8px;border:1px solid transparent;}
+  .bz-ly .lyhit{color:#9b8fc6;font-size:10.5px;line-height:1.55;}
+  .bz-ly.now{border-color:rgba(224,190,255,.75);background:rgba(150,100,255,.17);}
+  .bz-ly.now .lyyr{color:#f0e6ff;}
+  .bz-dis{color:#8f83bb;font-size:11px;line-height:1.75;margin-top:8px;padding-top:8px;border-top:1px dashed rgba(150,120,255,.22);}
   @media (max-width:720px){
     .bz-pillars{gap:6px;}
     .bz-pillar{padding:10px 3px;border-radius:11px;}
@@ -110,6 +147,88 @@
     .bz-form{width:100%;}
     .bz-field{width:100%;}
     .bz-field input,.bz-field select{width:100%;box-sizing:border-box;}
+    .bz-dy{min-width:70px;}
+    .bz-ly{grid-template-columns:46px 54px 1fr;gap:6px;padding:5px 7px;}
+    .bz-lylist{max-height:250px;}
+  }
+  /* === 六爻功能面板（书四）=== */
+  #liuyaoPanel{display:none;width:min(940px,94vw);max-height:86vh;overflow-y:auto;flex-direction:column;align-items:center;gap:14px;padding:6px;
+    scrollbar-width:thin;scrollbar-color:rgba(160,120,255,.45) transparent;}
+  #liuyaoPanel::-webkit-scrollbar{width:6px;}
+  #liuyaoPanel::-webkit-scrollbar-thumb{background:rgba(160,120,255,.45);border-radius:3px;}
+  #liuyaoPanel.show{display:flex;}
+  .ly-form{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;justify-content:center;}
+  .ly-field{display:flex;flex-direction:column;gap:5px;}
+  .ly-field label{color:#b9aee0;font-size:12px;letter-spacing:.06em;}
+  .ly-field input,.ly-field select{background:rgba(20,12,40,.8);color:#e9deff;border:1px solid rgba(160,120,255,.4);border-radius:10px;padding:8px 11px;font-size:14px;font-family:inherit;color-scheme:dark;}
+  .ly-field input:focus,.ly-field select:focus{outline:none;border-color:#cdb6ff;}
+  .ly-info{color:#cdb6ff;font-size:13px;text-align:center;min-height:20px;}
+  .ly-card{width:100%;background:rgba(18,10,38,.72);border:1px solid rgba(150,120,255,.28);border-radius:14px;padding:14px 16px;}
+  .ly-card h3{color:#ece4ff;font-size:14px;font-weight:500;margin:0 0 10px;letter-spacing:.08em;}
+  /* 摇卦区 */
+  .ly-cast{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;
+    background:rgba(18,10,38,.72);border:1px solid rgba(150,120,255,.28);border-radius:14px;padding:16px;}
+  .ly-coins{display:flex;gap:14px;justify-content:center;}
+  .ly-coin{width:52px;height:52px;border-radius:50%;position:relative;transform-style:preserve-3d;
+    transition:transform .5s cubic-bezier(.3,.8,.4,1);}
+  .ly-coin .face{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;display:flex;align-items:center;
+    justify-content:center;font-size:11px;letter-spacing:.04em;box-shadow:0 3px 10px rgba(0,0,0,.45);}
+  .ly-coin .zheng{background:linear-gradient(160deg,#d9c98f,#a4832f);color:#4a3410;border:1px solid #6d5620;}
+  .ly-coin .bei{background:linear-gradient(160deg,#9fa9c4,#5a6484);
+    color:#1a2138;border:1px solid #39405c;transform:rotateY(180deg);}
+  .ly-coin.b .zheng{transform:rotateY(180deg);}
+  .ly-coin.b .bei{transform:rotateY(0deg);}
+  .ly-coin .hole{position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;
+    background:rgba(12,8,26,.85);border-radius:2px;}
+  .ly-prog{color:#b9aee0;font-size:12.5px;letter-spacing:.08em;}
+  .ly-tosstxt{color:#cdb6ff;font-size:13px;min-height:19px;}
+  /* 六爻排盘 */
+  .ly-guahead{display:flex;flex-wrap:wrap;gap:4px 16px;color:#b0a4d6;font-size:12px;line-height:1.8;margin:-2px 0 10px;}
+  .ly-guahead b{color:#cdb6ff;font-weight:500;}
+  .ly-guawrap{display:flex;gap:14px;align-items:flex-start;justify-content:center;flex-wrap:wrap;}
+  .ly-guabox{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:210px;flex:1;}
+  .ly-guaname{color:#ece4ff;font-size:14.5px;letter-spacing:.06em;}
+  .ly-guameta{color:#8f83bb;font-size:11px;}
+  .ly-yaolist{display:flex;flex-direction:column;gap:5px;width:100%;}
+  .ly-yao{display:grid;grid-template-columns:56px 1fr auto;gap:9px;align-items:center;padding:5px 9px;border-radius:9px;
+    border:1px solid rgba(150,120,255,.16);background:rgba(120,90,200,.05);}
+  .ly-yao.mv{border-color:rgba(230,180,120,.6);background:rgba(200,140,60,.12);}
+  .ly-yao.shi{border-color:rgba(224,190,255,.7);background:rgba(150,100,255,.14);}
+  .ly-yaol{display:flex;flex-direction:column;gap:3px;width:52px;}
+  .ly-ybar{display:flex;align-items:center;gap:4px;}
+  .ly-bar{height:7px;border-radius:3px;background:#d9cfff;flex:1;}
+  .ly-bar.broken{background:linear-gradient(90deg,#d9cfff 0 40%,transparent 40% 60%,#d9cfff 60% 100%);}
+  .ly-mvmark{font-size:12px;color:#f0c48d;line-height:1;}
+  .ly-yaoname{color:#8f83bb;font-size:10.5px;}
+  .ly-yaomid{display:flex;flex-wrap:wrap;gap:3px 11px;align-items:baseline;color:#d9cfff;font-size:13px;}
+  .ly-yaomid .gz{font-size:15px;}
+  .ly-yaomid .lq{color:#cdb6ff;}
+  .ly-yaomid .ls{color:#8f83bb;font-size:11.5px;}
+  .ly-yaomid .wang{font-size:11px;color:#9b8fc6;}
+  .ly-tags{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;}
+  .ly-tag{font-size:10px;padding:1px 7px;border-radius:8px;border:1px solid transparent;white-space:nowrap;}
+  .ly-tag.shi{color:#e0c8ff;border-color:rgba(210,170,255,.55);background:rgba(150,100,255,.2);}
+  .ly-tag.ying{color:#b9aee0;border-color:rgba(160,130,230,.4);background:rgba(120,90,200,.12);}
+  .ly-tag.mv{color:#f0c48d;border-color:rgba(240,196,141,.55);background:rgba(200,140,60,.16);}
+  .ly-tag.kong{color:#8fa0c8;border-color:rgba(143,160,200,.45);background:rgba(90,110,160,.14);}
+  .ly-tag.po{color:#efa98d;border-color:rgba(239,169,141,.5);background:rgba(220,120,80,.14);}
+  .ly-tag.rc{color:#a99cd4;border-color:rgba(170,150,220,.35);background:rgba(140,120,200,.1);}
+  .ly-facts{display:flex;flex-direction:column;gap:9px;}
+  .ly-facts .fi{border-left:2px solid rgba(180,140,255,.65);padding:1px 0 1px 12px;}
+  .ly-facts .fk{color:#ece4ff;font-size:13.5px;}
+  .ly-facts .fv{color:#cdb6ff;font-size:13px;margin-top:1px;}
+  .ly-facts .fd{color:#b0a4d6;font-size:12.5px;line-height:1.7;margin-top:3px;}
+  .ly-struct{display:flex;flex-direction:column;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(150,120,255,.22);}
+  .ly-struct .si{color:#b0a4d6;font-size:12.5px;line-height:1.7;}
+  .ly-note{color:#8f83bb;font-size:11.5px;text-align:center;line-height:1.7;}
+  @media (max-width:720px){
+    .ly-form{width:100%;}
+    .ly-field{width:100%;}
+    .ly-field input,.ly-field select{width:100%;box-sizing:border-box;}
+    .ly-guabox{min-width:100%;}
+    .ly-yao{grid-template-columns:48px 1fr;gap:7px;padding:5px 7px;}
+    .ly-tags{grid-column:1/-1;justify-content:flex-start;}
+    .ly-coin{width:46px;height:46px;}
   }
   /* === 塔罗功能面板（书三）=== */
   #tarotPanel{display:none;width:min(1120px,95vw);max-height:86vh;overflow-y:auto;flex-direction:column;align-items:center;gap:16px;padding:6px;
@@ -460,6 +579,61 @@
     </svg>
     <div class="label" data-page-node-id="6ruOZDGwmGPlFeLEz9HDlz">塔罗</div>
   </div></div>
+  <div class="bookWrap" style="--d:1.2s"><div class="book" data-idx="3">
+      <svg viewBox="0 0 120 180" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="cov3" x1="0" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#35486f"/><stop offset="0.5" stop-color="#1b2542"/><stop offset="1" stop-color="#0b1122"/></linearGradient>
+        <linearGradient id="spine3" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#070b16"/><stop offset="1" stop-color="#1b2542"/></linearGradient>
+        <linearGradient id="gold3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2eaf8"/><stop offset="0.5" stop-color="#8fa4c8"/><stop offset="1" stop-color="#c3d2ea"/></linearGradient>
+        <radialGradient id="emb3" cx="0.5" cy="0.4" r="0.65"><stop offset="0" stop-color="#111a30"/><stop offset="1" stop-color="#04060d"/></radialGradient>
+        <filter id="grain3" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="71" stitchTiles="stitch" result="t"/><feColorMatrix in="t" type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer></filter>
+        <filter id="sh3" x="-40%" y="-40%" width="180%" height="200%"><feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000" flood-opacity="0.55"/></filter>
+      </defs>
+      <g filter="url(#sh3)">
+        <rect x="100" y="14" width="9" height="152" rx="2" fill="#d8c79c"/>
+        <g stroke="#b6a877" stroke-width="0.6" opacity="0.65"><line x1="100" y1="34" x2="109" y2="34"/><line x1="100" y1="64" x2="109" y2="64"/><line x1="100" y1="94" x2="109" y2="94"/><line x1="100" y1="124" x2="109" y2="124"/><line x1="100" y1="150" x2="109" y2="150"/></g>
+        <rect x="100" y="14" width="2.4" height="152" fill="#caa24a" opacity="0.8"/>
+        <rect x="14" y="8" width="88" height="164" rx="6" fill="url(#cov3)" stroke="#0d1220" stroke-width="1"/>
+        <rect x="14" y="8" width="88" height="164" rx="6" filter="url(#grain3)" opacity="0.32"/>
+        <rect x="14" y="8" width="88" height="164" rx="6" filter="url(#grungeStain)" opacity="0.55"/>
+        <g fill="#000" opacity="0.10">
+          <ellipse cx="42" cy="142" rx="14" ry="9"/><ellipse cx="90" cy="48" rx="9" ry="6"/>
+          <ellipse cx="55" cy="100" rx="17" ry="11"/><ellipse cx="28" cy="70" rx="8" ry="6"/>
+        </g>
+        <g fill="#1a2440" opacity="0.24">
+          <ellipse cx="30" cy="92" rx="6" ry="4"/><ellipse cx="86" cy="128" rx="7" ry="5"/>
+          <ellipse cx="64" cy="156" rx="10" ry="5"/>
+        </g>
+        <g stroke="#000" stroke-opacity="0.15" stroke-width="0.6" fill="none" stroke-linecap="round">
+          <path d="M22,36 L46,54"/><path d="M30,154 L72,136"/><path d="M88,26 L96,94"/><path d="M20,108 L52,98"/><path d="M40,150 L44,118"/>
+        </g>
+        <g stroke="#fff" stroke-opacity="0.05" stroke-width="0.5" fill="none">
+          <path d="M42,20 L60,72"/><path d="M24,126 L54,114"/><path d="M70,150 L88,140"/>
+        </g>
+        <rect x="14" y="8" width="88" height="164" rx="6" fill="url(#grungeVig)"/>
+        <path d="M16,13 Q60,9 100,14 L100,30 Q60,24 16,30 Z" fill="#ffffff" opacity="0.05"/>
+        <ellipse cx="30" cy="20" rx="9" ry="4" fill="#000" opacity="0.10"/>
+        <ellipse cx="92" cy="160" rx="10" ry="5" fill="#000" opacity="0.12"/>
+        <ellipse cx="82" cy="42" rx="5" ry="3" fill="#fff" opacity="0.05"/>
+        <rect x="14" y="8" width="15" height="164" rx="6" fill="url(#spine3)"/>
+        <g stroke="#0d1220" stroke-width="1.4" opacity="0.8"><line x1="14" y1="40" x2="29" y2="40"/><line x1="14" y1="64" x2="29" y2="64"/><line x1="14" y1="116" x2="29" y2="116"/><line x1="14" y1="140" x2="29" y2="140"/></g>
+        <g stroke="url(#gold3)" stroke-width="0.8" opacity="0.7"><line x1="15" y1="22" x2="28" y2="22"/><line x1="15" y1="156" x2="28" y2="156"/></g>
+        <rect x="32" y="16" width="68" height="148" rx="4" fill="none" stroke="url(#gold3)" stroke-width="1.6" opacity="0.92"/>
+        <rect x="35" y="19" width="62" height="142" rx="3" fill="none" stroke="url(#gold3)" stroke-width="0.5" opacity="0.5"/>
+        <circle cx="66" cy="59" r="24" fill="url(#emb3)" stroke="url(#gold3)" stroke-width="1.4"/>
+        <circle cx="66" cy="59" r="20.5" fill="none" stroke="url(#gold3)" stroke-width="0.5" opacity="0.5"/>
+        <g stroke="url(#gold3)" fill="none" stroke-width="1.3">
+          <circle cx="66" cy="47" r="9.5"/><rect x="63.2" y="44.2" width="5.6" height="5.6"/>
+          <circle cx="55.5" cy="68" r="9.5"/><rect x="52.7" y="65.2" width="5.6" height="5.6"/>
+          <circle cx="76.5" cy="68" r="9.5"/><rect x="73.7" y="65.2" width="5.6" height="5.6"/>
+        </g>
+        <rect x="40" y="118" width="52" height="30" rx="4" fill="#0b1120" stroke="url(#gold3)" stroke-width="1" opacity="0.95"/>
+        <text x="66" y="138.4" text-anchor="middle" font-size="13" font-family="serif" letter-spacing="3" fill="url(#gold3)" font-weight="bold">六爻</text>
+        <text x="66.6" y="139.2" text-anchor="middle" font-size="13" font-family="serif" letter-spacing="3" fill="#0b1120" font-weight="bold">六爻</text>
+      </g>
+    </svg>
+    <div class="label">六爻</div>
+  </div></div>
   <div class="books-cap" data-page-node-id="V9aymVUMr0wGpltlW2pAO4">选择一册典籍 · 开启一段未知</div>
 </div>
 <div id="funcpage" data-page-node-id="HBXMXUyicnFkuf1n1t6zyo">
@@ -521,6 +695,46 @@
     </div>
     <div class="bz-info" id="bzInfo" data-page-node-id="4zVHER3uFBy1hh1KSDWESu"></div>
     <div id="bzResult" data-page-node-id="rVbp2Ms6ZQdCYX1pmsW7Gh"></div>
+  </div>
+  <div id="liuyaoPanel">
+    <div class="ly-form">
+      <div class="ly-field">
+        <label>所占之事</label>
+        <select id="lyCategory">
+          <option value="其他">其他 / 综合</option>
+          <option value="求财">求财 · 生意</option>
+          <option value="事业功名">事业 · 功名</option>
+          <option value="考试文书">考试 · 文书</option>
+          <option value="感情">感情 · 婚姻</option>
+          <option value="健康疾病">健康 · 疾病</option>
+          <option value="子女孕育">子女 · 孕育</option>
+          <option value="出行迁移">出行 · 迁移</option>
+          <option value="官司诉讼">官司 · 诉讼</option>
+          <option value="寻人失物">寻人 · 失物</option>
+        </select>
+      </div>
+      <div class="ly-field" id="lySexField" style="display:none">
+        <label>问卦人</label>
+        <select id="lySex"><option value="男">男</option><option value="女">女</option></select>
+      </div>
+      <div class="ly-field">
+        <label>所问之事（可选）</label>
+        <input type="text" id="lyQuestion" maxlength="40" placeholder="默想即可，也可写下">
+      </div>
+      <button class="tp-btn" id="lyStart">✦ 起卦</button>
+    </div>
+    <div class="ly-info" id="lyInfo"></div>
+    <div class="ly-cast" id="lyCast" style="display:none">
+      <div class="ly-coins" id="lyCoins">
+        <div class="ly-coin"><div class="face zheng">正</div><div class="face bei">背</div><div class="hole"></div></div>
+        <div class="ly-coin"><div class="face zheng">正</div><div class="face bei">背</div><div class="hole"></div></div>
+        <div class="ly-coin"><div class="face zheng">正</div><div class="face bei">背</div><div class="hole"></div></div>
+      </div>
+      <div class="ly-prog" id="lyProg">第 1 / 6 次</div>
+      <div class="ly-tosstxt" id="lyTossTxt">屏息默想所问之事，然后摇卦</div>
+      <button class="tp-btn" id="lyToss">摇 卦</button>
+    </div>
+    <div id="lyResult"></div>
   </div>
   <div id="tarotPanel" data-page-node-id="qwXtWT7xbCF8QujQarPiVY">
     <div class="tp-controls" data-page-node-id="T9UzFCCmKUCR9TlllENvVg">
@@ -1083,11 +1297,12 @@ ver.textContent = APP_VERSION;
 const funcpage = document.getElementById('funcpage');
 const fpTitle = document.getElementById('fpTitle');
 const fpDesc = document.getElementById('fpDesc');
-const NAMES = ['八字','占星','塔罗'];
+const NAMES = ['八字','占星','塔罗','六爻'];
 const DESCS = [
   '八字排盘 · 输入生辰，排出四柱命盘，附五行分布、喜用神与命盘要点。',
   '占星（开发中）。',
-  '塔罗牌阵 · 选择牌阵，逐张翻开，可获星灵解读。'
+  '塔罗牌阵 · 选择牌阵，逐张翻开，可获星灵解读。',
+  '六爻纳甲 · 三枚铜钱摇六次，装卦排六亲世应，参断旺衰空破。'
 ];
 let booksShown = false;
 function showBooks(){
@@ -1109,10 +1324,16 @@ function selectBook(idx){
     tarotPanel.classList.add('show');
     initTarot();
     showPileState();
+  } else if(idx === 3){
+    fpTitle.style.display = 'none';
+    fpDesc.style.display = 'none';
+    liuyaoPanel.classList.add('show');
+    lyCategoryChange();
   } else {
     fpTitle.style.display = '';
     fpDesc.style.display = '';
     tarotPanel.classList.remove('show');
+    liuyaoPanel.classList.remove('show');
     baziPanel.classList.remove('show');
     fpTitle.textContent = NAMES[idx];
     fpDesc.textContent = DESCS[idx];
@@ -1123,6 +1344,7 @@ function backToBooks(){
   funcpage.classList.remove('show');
   tarotPanel.classList.remove('show');
   baziPanel.classList.remove('show');
+  document.getElementById('liuyaoPanel').classList.remove('show');
   fpTitle.style.display = '';
   fpDesc.style.display = '';
   document.body.classList.remove('func');
@@ -1199,7 +1421,102 @@ function renderBazi(r){
       '<span><b>调候参考</b> ' + dhTxt + '</span>' +
     '</div></div>' +
     (feats ? '<div class="bz-card"><h3>命盘要点</h3><div class="bz-feat">' + feats + '</div></div>' : '') +
+    renderL3(r.l3) +
     '<div class="bz-note">' + r.note + '</div>';
+
+  if (r.l3 && r.l3.ok && r.l3.liunian && r.l3.liunian.length) {
+    bzLyFrom = r.l3.liunian[0].year;
+    bzLyTo = r.l3.liunian[r.l3.liunian.length - 1].year;
+  }
+  bindL3();
+}
+
+// ===== L3 大运 / 流年 =====
+const TEND_CLS = {'助益':'t-good', '平和':'t-flat', '压力':'t-bad'};
+let bzLastPayload = null;      // 最近一次排盘请求参数，供流年翻页复用
+let bzLyFrom = null, bzLyTo = null;
+
+function renderL3(l3){
+  if (!l3 || !l3.ok) {
+    return '<div class="bz-card"><h3>大运 · 流年</h3><div class="bz-sub">' +
+      ((l3 && l3.why) ? l3.why : '暂无可用数据') + '</div></div>';
+  }
+  const q = l3.qiyun || {};
+  const head = '<div class="bz-l3head">' +
+    '<span><b>起运</b> ' + (q.age_text || '—') + (q.start_date ? '（约 ' + q.start_date + '）' : '') + '</span>' +
+    '<span><b>排法</b> ' + l3.direction + '行</span>' +
+    '<span><b>交节</b> ' + (q.jie || '—') + ' ' + (q.jie_at || '') + '，相距 ' + (q.days != null ? q.days : '—') + ' 天（三天折一年）</span>' +
+    '<span><b>依据</b> ' + (l3.direction_why || '') + '</span>' +
+    '<span><b>年龄</b> 按虚岁计' + (l3.before_qiyun ? '　<b style="color:#efa98d">尚未起运</b>（当前行月柱运）' : '') + '</span>' +
+  '</div>';
+
+  const dys = (l3.dayun || []).map(d =>
+    '<div class="bz-dy' + (d.index === l3.current_dayun_index ? ' now' : '') + '" data-dy="' + d.index + '">' +
+      '<div class="dygz" style="color:' + (WX_COLOR[d.gan_wx] || '#f3ecff') + '">' + d.ganzhi + '</div>' +
+      '<div class="dygod">' + d.gan_god + '·' + d.zhi_god + '</div>' +
+      '<div class="dyage">' + (d.age_text || '') + '</div>' +
+      '<div class="dyyr">' + d.start_year + '–' + d.end_year + '</div>' +
+      '<div class="dytag ' + (TEND_CLS[d.tendency] || 't-flat') + '">' + d.tendency + '</div>' +
+    '</div>').join('');
+
+  const lys = (l3.liunian || []).map(y => {
+    const hits = (y.hits || []).map(h => h.note).join('；');
+    const dyTag = y.dayun_gz
+      ? '<span class="lytag" style="color:#9b8fc6;border-color:rgba(150,120,255,.28)">' +
+        (y.in_dayun ? '第' + y.dayun_index + '运 ' : '月柱运 ') + y.dayun_gz + '</span>' : '';
+    return '<div class="bz-ly' + (y.is_current ? ' now' : '') + '" data-ly="' + y.year + '">' +
+      '<div class="lyyr">' + y.year + '<i>' + y.age + '岁</i></div>' +
+      '<div><span class="lygz" style="color:' + (WX_COLOR[y.gan_wx] || '#f3ecff') + '">' + y.ganzhi + '</span>' +
+        '<span class="lygod">' + y.gan_god + '·' + y.zhi_god + '</span></div>' +
+      '<div class="lybody">' +
+        '<div class="lytags"><span class="lytag ' + (TEND_CLS[y.tendency] || 't-flat') + '">' + y.tendency + '</span>' + dyTag + '</div>' +
+        (hits ? '<div class="lyhit">' + hits + '</div>' : '') +
+      '</div></div>';
+  }).join('');
+
+  const first = (l3.liunian && l3.liunian.length) ? l3.liunian[0].year : '';
+  const last  = (l3.liunian && l3.liunian.length) ? l3.liunian[l3.liunian.length - 1].year : '';
+  const nav = '<div class="bz-lynav">' +
+    '<button id="bzLyPrev" type="button">◀ 更早十年</button>' +
+    '<span class="rng">' + first + '–' + last + '</span>' +
+    '<button id="bzLyNext" type="button">更晚十年 ▶</button></div>';
+  const dis = '<div class="bz-dis">大运十年一换、流年一年一换。这里的「助益 / 平和 / 压力」只表示' +
+    '该柱五行落在喜用神还是忌神、以及地支与命局有无冲合——是可逐条核对的结构判断，<b>不是事件预言</b>。' +
+    '同一倾向在不同人身上差别极大，请当坐标看，别当结论用。</div>';
+
+  return '<div class="bz-card"><h3>大运（每运十年）</h3>' + head +
+      '<div class="bz-dyscroll" id="bzDyScroll">' + dys + '</div></div>' +
+    '<div class="bz-card"><h3>流年</h3>' + nav +
+      '<div class="bz-lylist" id="bzLyList">' + lys + '</div>' + dis + '</div>';
+}
+
+function bindL3(){
+  const prev = document.getElementById('bzLyPrev');
+  const next = document.getElementById('bzLyNext');
+  if (prev) prev.onclick = () => shiftLy(-10);
+  if (next) next.onclick = () => shiftLy(10);
+  const nowDy = document.querySelector('.bz-dy.now');
+  if (nowDy && nowDy.scrollIntoView) nowDy.scrollIntoView({inline:'center', block:'nearest'});
+  const nowLy = document.querySelector('.bz-ly.now');
+  if (nowLy && nowLy.scrollIntoView) nowLy.scrollIntoView({block:'center'});
+}
+
+async function shiftLy(delta){
+  if (!bzLastPayload || bzLyFrom == null) return;
+  bzLyFrom += delta; bzLyTo += delta;
+  bzInfo.textContent = '正在排盘……';
+  try {
+    const r = await apiFetch('/api/bazi', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({}, bzLastPayload, {ly_from: bzLyFrom, ly_to: bzLyTo}))
+    });
+    const j = await r.json();
+    if (j.error) { bzInfo.textContent = j.error; return; }
+    bzLyFrom = (j.l3 && j.l3.liunian && j.l3.liunian.length) ? j.l3.liunian[0].year : bzLyFrom;
+    bzLyTo = (j.l3 && j.l3.liunian && j.l3.liunian.length) ? j.l3.liunian[j.l3.liunian.length - 1].year : bzLyTo;
+    renderBazi(j);
+    bzInfo.textContent = '';
+  } catch (e) { bzInfo.textContent = '排盘失败：' + e.message; }
 }
 
 bzGo.onclick = async () => {
@@ -1208,14 +1525,16 @@ bzGo.onclick = async () => {
   const p = dv.split('-').map(Number);
   bzInfo.textContent = '正在排盘……';
   bzResult.innerHTML = '';
+  bzLyFrom = bzLyTo = null;
   try {
+    bzLastPayload = {
+      year: p[0], month: p[1], day: p[2],
+      hour: Number(bzHour.value), minute: 0,
+      sex: bzSex.value, lon: bzCity.value
+    };
     const r = await apiFetch('/api/bazi', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        year: p[0], month: p[1], day: p[2],
-        hour: Number(bzHour.value), minute: 0,
-        sex: bzSex.value, lon: bzCity.value
-      })
+      body: JSON.stringify(bzLastPayload)
     });
     const j = await r.json();
     if (j.error) { bzInfo.textContent = j.error; return; }
@@ -1223,6 +1542,169 @@ bzGo.onclick = async () => {
     bzInfo.textContent = '';
   } catch (e) { bzInfo.textContent = '排盘失败：' + e.message; }
 };
+
+// ===== 六爻（书四）逻辑 =====
+const liuyaoPanel = document.getElementById('liuyaoPanel');
+const lyCategory = document.getElementById('lyCategory');
+const lySexField = document.getElementById('lySexField');
+const lySex      = document.getElementById('lySex');
+const lyQuestion = document.getElementById('lyQuestion');
+const lyStart    = document.getElementById('lyStart');
+const lyInfo     = document.getElementById('lyInfo');
+const lyCast     = document.getElementById('lyCast');
+const lyCoins    = document.getElementById('lyCoins');
+const lyProg     = document.getElementById('lyProg');
+const lyTossTxt  = document.getElementById('lyTossTxt');
+const lyToss     = document.getElementById('lyToss');
+const lyResult   = document.getElementById('lyResult');
+const LY_WX = {'木':'#7fc8a9','火':'#e8836b','土':'#d9b26a','金':'#c9c4d8','水':'#7fa8d8'};
+
+let lyYaos = [];        // [[阳, 动], ...] 初爻 → 上爻
+let lyBusy = false;
+
+function lyRand(){
+  try { const a = new Uint32Array(1); crypto.getRandomValues(a); return (a[0] % 2) === 1; }
+  catch(e){ return Math.random() < 0.5; }
+}
+
+function lyCategoryChange(){
+  lySexField.style.display = (lyCategory.value === '感情') ? '' : 'none';
+}
+
+function lyTossOnce(){
+  // 三枚铜钱：有字为「正」、无字（国徽）为「背」
+  // 0背=老阴(动) 1背=少阳 2背=少阴 3背=老阳(动)
+  const b = [lyRand(), lyRand(), lyRand()];
+  const n = b.filter(Boolean).length;
+  let yang, moving, name;
+  if (n === 0)      { yang = false; moving = true;  name = '老阴'; }
+  else if (n === 1) { yang = true;  moving = false; name = '少阳'; }
+  else if (n === 2) { yang = false; moving = false; name = '少阴'; }
+  else              { yang = true;  moving = true;  name = '老阳'; }
+  Array.prototype.forEach.call(lyCoins.children, (c, i) => c.classList.toggle('b', b[i]));
+  lyTossTxt.textContent = n + '背' + (3 - n) + '正 · ' + name + (moving ? '（动爻）' : '');
+  return [yang, moving];
+}
+
+function lyResetCast(){
+  lyYaos = [];
+  lyBusy = false;
+  lyResult.innerHTML = '';
+  lyInfo.textContent = '';
+  lyCast.style.display = '';
+  lyProg.textContent = '第 1 / 6 次';
+  lyTossTxt.textContent = '屏息默想所问之事，然后摇卦';
+  lyToss.disabled = false;
+  Array.prototype.forEach.call(lyCoins.children, c => c.classList.remove('b'));
+}
+
+lyCategory.addEventListener('change', lyCategoryChange);
+
+lyStart.onclick = () => { lyCategoryChange(); lyResetCast(); };
+
+lyToss.onclick = async () => {
+  if (lyBusy || lyYaos.length >= 6) return;
+  lyYaos.push(lyTossOnce());
+  if (lyYaos.length < 6) {
+    lyProg.textContent = '第 ' + (lyYaos.length + 1) + ' / 6 次';
+    return;
+  }
+  lyBusy = true; lyToss.disabled = true;
+  lyProg.textContent = '六爻已成';
+  lyTossTxt.textContent = '正在装卦……';
+  try {
+    const r = await apiFetch('/api/liuyao', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        yao: lyYaos, category: lyCategory.value,
+        sex: lySex.value, question: lyQuestion.value || null
+      })
+    });
+    const j = await r.json();
+    if (j.error) { lyInfo.textContent = j.error; lyToss.disabled = false; lyBusy = false; return; }
+    renderLiuyao(j);
+    lyCast.style.display = 'none';
+  } catch (e) {
+    lyInfo.textContent = '装卦失败：' + e.message;
+    lyToss.disabled = false; lyBusy = false;
+  }
+};
+
+function lyYaoRow(y, showMove){
+  const mark = (showMove && y.moving) ? '<div class="ly-mvmark">' + (y.yang ? '○' : '×') + '</div>' : '';
+  const bar = '<div class="ly-ybar"><div class="ly-bar' + (y.yang ? '' : ' broken') + '"></div>' + mark + '</div>';
+  const tags = [];
+  if (y.is_shi)  tags.push('<span class="ly-tag shi">世</span>');
+  if (y.is_ying) tags.push('<span class="ly-tag ying">应</span>');
+  if (showMove && y.moving) tags.push('<span class="ly-tag mv">动</span>');
+  if (y.changed && !showMove) tags.push('<span class="ly-tag mv">变</span>');
+  if (y.is_kong)    tags.push('<span class="ly-tag kong">空</span>');
+  if (y.is_yuepo)   tags.push('<span class="ly-tag po">月破</span>');
+  if (y.is_richong) tags.push('<span class="ly-tag rc">日冲</span>');
+  return '<div class="ly-yao' + (y.moving && showMove ? ' mv' : '') + (y.is_shi ? ' shi' : '') + '">' +
+    '<div class="ly-yaol">' + bar + mark + '<div class="ly-yaoname">' + y.pos_name + '</div></div>' +
+    '<div class="ly-yaomid">' +
+      '<span class="gz" style="color:' + (LY_WX[y.wx] || '#f3ecff') + '">' + y.ganzhi + '<span style="font-size:11px">' + y.wx + '</span></span>' +
+      '<span class="lq">' + y.liuqin + '</span>' +
+      (y.liushen ? '<span class="ls">' + y.liushen + '</span>' : '') +
+      '<span class="wang">' + y.wang + '</span>' +
+    '</div>' +
+    '<div class="ly-tags">' + tags.join('') + '</div>' +
+  '</div>';
+}
+
+function lyGuaBox(g, title, showMove, showSY){
+  const rows = (g.yao || []).slice().reverse().map(y => lyYaoRow(y, showMove)).join('');
+  const meta = (g.up_symbol || '') + (g.up || '') + '上 · ' + (g.low_symbol || '') + (g.low || '') + '下　' +
+    g.gong + '宫（' + g.gong_wx + '）' + (showSY ? '　世' + g.shi + ' 应' + g.ying : '');
+  return '<div class="ly-guabox">' +
+    '<div class="ly-guaname">' + title + '：' + g.name + '</div>' +
+    '<div class="ly-guameta">' + meta + '</div>' +
+    '<div class="ly-yaolist">' + rows + '</div>' +
+  '</div>';
+}
+
+function renderLiuyao(r){
+  const head = '<div class="ly-guahead">' +
+    '<span><b>起卦</b> ' + (r.time || '') + '</span>' +
+    '<span><b>所占</b> ' + (r.category || '') + '</span>' +
+    (r.question ? '<span><b>所问</b> ' + r.question + '</span>' : '') +
+    '<span><b>月建</b> ' + r.month_zhi + '月</span>' +
+    '<span><b>日辰</b> ' + r.day_gz + '</span>' +
+    (r.xunkong && r.xunkong.length ? '<span><b>旬空</b> ' + r.xunkong.join('、') + '</span>' : '') +
+  '</div>';
+
+  let guas = '<div class="ly-guawrap">' + lyGuaBox(r.ben, '本卦', true, true);
+  if (r.bian) guas += lyGuaBox(r.bian, '变卦', false, false);
+  guas += '</div>';
+
+  const ys = r.yongshen || {};
+  const yongCard = '<div class="ly-card"><h3>用神</h3><div class="ly-facts">' +
+    '<div class="fi"><div class="fk">' + (ys.label || '—') + '</div>' +
+    '<div class="fv">' + (ys.ganzhi || '不现于卦') + '</div>' +
+    '<div class="fd">' + (ys.why || '') + '</div></div>' +
+    '</div></div>';
+
+  const facts = (r.facts || []).map(f =>
+    '<div class="fi"><div class="fk">' + f.k + '</div><div class="fv">' + f.v + '</div>' +
+    '<div class="fd">' + f.d + '</div></div>').join('');
+  const struct = (r.struct || []).map(s => '<div class="si">· ' + s + '</div>').join('');
+
+  const btn = '<div style="text-align:center;margin-top:4px">' +
+    '<button class="tp-btn" id="lyAgain" type="button">↻ 重新起卦</button></div>';
+
+  lyResult.innerHTML = head +
+    '<div class="ly-card"><h3>卦象</h3>' + guas + '</div>' +
+    yongCard +
+    '<div class="ly-card"><h3>参断要点</h3><div class="ly-facts">' + facts + '</div>' +
+      (struct ? '<div class="ly-struct">' + struct + '</div>' : '') + '</div>' +
+    btn +
+    '<div class="ly-note">以上为「装卦 + 事实提取」：纳甲、六亲、世应、六神、旬空月破皆按传统固定规则排定，可逐条核对；' +
+      '「参断要点」只陈述卦中确实存在的结构与旺衰关系，<b>不作吉凶断言</b>——同样的卦在不同事上、不同的人手里结论可以完全不同。</div>';
+
+  const again = document.getElementById('lyAgain');
+  if (again) again.onclick = () => { lyResetCast(); lyCategoryChange(); };
+}
 
 // ===== 塔罗（书三）逻辑 =====
 const tarotPanel = document.getElementById('tarotPanel');

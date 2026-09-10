@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import tarot
 import tarot_ai
 import bazi
+import liuyao
 
 app = FastAPI(title="全自动算命机 API")
 
@@ -97,10 +98,11 @@ async def tarot_interpret(req: Request):
 
 @app.post("/api/bazi")
 async def bazi_calc(req: Request):
-    """八字排盘 + 解读（纯本地计算，零 AI、零外部依赖）。
+    """八字排盘 + 解读 + 大运流年（纯本地计算，零 AI、零外部依赖）。
 
     入参：year, month, day, hour(0-23), minute, sex, lon(出生地经度，可选)
-    lon 传入时按「平太阳时」校正出生时刻。
+    lon 传入时按「平太阳时 + 均时差」校正为真太阳时。
+    可选：dayun_n(大运步数，默认10)、ly_from/ly_to(流年区间，默认当前年 -6 ~ +15)
     """
     data = await req.json()
     try:
@@ -112,8 +114,53 @@ async def bazi_calc(req: Request):
         sex = data.get("sex") or None
         lon = data.get("lon")
         lon = float(lon) if lon not in (None, "", 0) else None
-        result = bazi.compute_bazi(year, month, day, hour, minute, sex=sex, lon=lon)
+
+        def _int(v, default=None):
+            try:
+                return int(v)
+            except (TypeError, ValueError):
+                return default
+
+        result = bazi.compute_bazi(
+            year, month, day, hour, minute, sex=sex, lon=lon,
+            dayun_n=_int(data.get("dayun_n"), 10) or 10,
+            ly_from=_int(data.get("ly_from")),
+            ly_to=_int(data.get("ly_to")),
+        )
         result["service"] = "bazi"
         return result
     except Exception as e:
         return {"error": "排盘失败：%s" % e}
+
+
+@app.post("/api/liuyao")
+async def liuyao_calc(req: Request):
+    """六爻起卦 / 装卦 / 参断（纯本地计算，零 AI）。
+
+    入参：
+      yao     可选，[[阳(bool), 动(bool)], ...] 初爻→上爻；不传则由后端摇卦
+      category 占事类别（求财 / 事业功名 / 考试文书 / 健康疾病 / 子女孕育 /
+                       出行迁移 / 官司诉讼 / 寻人失物 / 感情 / 其他）
+      sex     问卦人性别（category=感情 时用于定用神）
+      question 所问之事（原样回传，便于展示）
+    只做装卦与事实提取（旺衰/空破/动爻/世应），不断吉凶。
+    """
+    data = await req.json()
+    try:
+        yao = data.get("yao")
+        if yao:
+            yao = [(bool(a), bool(b)) for a, b in yao]
+            if len(yao) != 6:
+                return {"error": "需要 6 爻数据"}
+        result = liuyao.compute_liuyao(
+            yao6=yao,
+            category=data.get("category") or "其他",
+            sex=data.get("sex") or None,
+            question=data.get("question") or None,
+        )
+        if isinstance(result, dict) and "error" in result:
+            return result
+        result["service"] = "liuyao"
+        return result
+    except Exception as e:
+        return {"error": "起卦失败：%s" % e}
