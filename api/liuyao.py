@@ -123,6 +123,39 @@ YONGSHEN_LOVE = {'男': ('妻财', '男问婚姻感情，以妻财爻为用（�
                  '女': ('官鬼', '女问婚姻感情，以官鬼爻为用（夫、男友）')}
 
 
+# ---------------- 进阶规则用表 ----------------
+import itertools as _it
+
+# 三合局：三支 -> 所化五行
+SANHE = {('申', '子', '辰'): '水', ('亥', '卯', '未'): '木',
+         ('寅', '午', '戌'): '火', ('巳', '酉', '丑'): '金'}
+# 半合 / 拱合：同一局中任意两支（生地半合、墓地半合、拱合力度递减，此处统一记作「待合」）
+BANHE = {}
+for _trio, _wx in SANHE.items():
+    for _pair in _it.combinations(_trio, 2):
+        BANHE[frozenset(_pair)] = _wx
+# 半合细分：含「生支」为生地半合，含「墓支」为墓地半合，余为拱合
+SANHE_PARTS = {('申', '子', '辰'): ('子', '辰'), ('亥', '卯', '未'): ('卯', '未'),
+               ('寅', '午', '戌'): ('午', '戌'), ('巳', '酉', '丑'): ('酉', '丑')}
+
+# 三刑 / 自刑 / 六害
+XING_TRIO = (('寅', '巳', '申', '无恩之刑'), ('丑', '戌', '未', '恃势之刑'))
+XING_PAIR = {frozenset(('子', '卯')): '无礼之刑'}
+ZI_XING = ('辰', '午', '酉', '亥')
+HAI_PAIR = {frozenset(p) for p in
+            (('子', '未'), ('丑', '午'), ('寅', '巳'), ('卯', '辰'), ('申', '亥'), ('酉', '戌'))}
+
+# 进神 / 退神（动爻化出地支）
+JIN = {'亥': '子', '丑': '辰', '寅': '卯', '辰': '未',
+       '巳': '午', '未': '戌', '申': '酉', '戌': '丑'}
+TUI = {v: k for k, v in JIN.items()}
+
+# 五行墓库（土墓传统有两派：随水在辰 / 随火在戌；此处取通行的「土随水墓辰」）
+MU = {'水': '辰', '木': '未', '火': '戌', '金': '丑', '土': '辰'}
+# 十二长生之「绝」
+JUE = {'木': '申', '火': '亥', '金': '寅', '水': '巳', '土': '巳'}
+
+
 # ---------------- 卦表构建 ----------------
 def _flip(yao, pos):
     y = list(yao)
@@ -337,6 +370,187 @@ def zhuang_gua(bit6, moving6, gong_wx, yue_zhi, ri_zhi, kong):
     return out
 
 
+def detect_advanced(ben_yao, bian_yao, moving_idx, yue_zhi, ri_zhi, kong, key_pos=None):
+    """进阶规则：暗动/日破、入墓、化进退、化回头生克、化墓化绝、三合刑害。
+
+    只标记「卦中确实存在且可核对」的结构，不判吉凶。三条收紧口径：
+      · 入墓 —— 只论月建 / 日辰之墓（动而化墓另算），且只看世、应、用神、动爻
+      · 三合 —— 必须有动爻参与：二爻动成真局、一爻动为待成、全静仅具其象
+      · 六害 —— 只列涉及世、应、用神、动爻的组合，避免满屏噪音
+    返回 {'flags': {yid: [flag...]}, 'combos': [...], 'xing': [...], 'hai': [...]}
+    """
+    flags = {}
+
+    def add(pos, code, name, desc):
+        flags.setdefault(int(pos), []).append(
+            {'code': code, 'name': name, 'desc': desc})
+
+    kong = tuple(kong or ())
+    key_pos = set(key_pos or ())
+
+    # 本卦地支（刑害只论本卦）；本+变（合局可含动爻化出之支）
+    ben_zhis = [y['zhi'] for y in ben_yao]
+    ben_set = set(z for z in ben_zhis if z)
+    all_zhis = list(ben_zhis)
+    if bian_yao:
+        all_zhis += [y['zhi'] for y in bian_yao]
+    zhi_set = set(z for z in all_zhis if z)
+    # 该支是否有动爻（三合成局与否的判据）
+    zhi_moving = {}
+    for y in ben_yao:
+        zhi_moving.setdefault(y['zhi'], False)
+        if y.get('moving'):
+            zhi_moving[y['zhi']] = True
+    ext_zhis = {'月建' + yue_zhi: yue_zhi, '日辰' + ri_zhi: ri_zhi}
+
+    for i, y in enumerate(ben_yao):
+        zhi, wx = y.get('zhi', ''), y.get('wx', '')
+
+        # ---- 静爻：暗动 / 日破 ----
+        if not y.get('moving') and y.get('is_richong'):
+            if y.get('wang') in ('旺', '相'):
+                add(i, 'andong', '暗动',
+                    '%s被日辰%s相冲，爻旺而受冲为「暗动」——静而实动，传统视之为暗中发力、事有突发之象'
+                    % (zhi, ri_zhi))
+            else:
+                add(i, 'ripo', '日破',
+                    '%s被日辰%s相冲，爻值%s无力受冲为「日破」——衰极而被冲散，其力难用'
+                    % (zhi, ri_zhi, y.get('wang') or ''))
+
+        # ---- 入墓：只论月建 / 日辰之墓，且限于世、应、用神、动爻 ----
+        mu = MU.get(wx)
+        if mu and i in key_pos:
+            src = [lbl for lbl, ez in ext_zhis.items() if ez == mu]
+            if src:
+                add(i, 'ruMu', '入墓',
+                    '%s（%s）墓在%s，今值%s——墓者力藏而不显，须待冲开墓库方得用'
+                    % (zhi, wx, mu, '、'.join(src)))
+
+        # ---- 空 + 月破 ----
+        if y.get('is_kong') and y.get('is_yuepo'):
+            add(i, 'kongpo', '空破',
+                '既值旬空又遭月建%s冲破，古称「空破」，其力近乎全失' % yue_zhi)
+
+        # ---- 动爻：化出之爻的诸般变化 ----
+        if y.get('moving') and bian_yao and i < len(bian_yao):
+            b = bian_yao[i]
+            bz, bwx = b.get('zhi', ''), b.get('wx', '')
+            if JIN.get(zhi) == bz:
+                add(i, 'huajin', '化进',
+                    '%s化%s为「进神」——由微向盛，其势方长' % (zhi, bz))
+            elif TUI.get(zhi) == bz:
+                add(i, 'huatui', '化退',
+                    '%s化%s为「退神」——由盛向衰，其势渐消' % (zhi, bz))
+            elif bz == zhi:
+                add(i, 'fuyin', '化伏吟',
+                    '%s化%s为「伏吟」——动而复止，主迟滞、反复、内心不安' % (zhi, bz))
+            elif CHONG.get(zhi) == bz:
+                add(i, 'fanyin', '化反吟',
+                    '%s化%s为「反吟」（相冲）——动而相冲，主反复不定、事有回头' % (zhi, bz))
+
+            if bwx and wx:
+                if SHENG.get(bwx) == wx:
+                    add(i, 'huitousheng', '回头生',
+                        '化出之%s（%s）生本爻%s（%s），为「回头生」——动而得助'
+                        % (bz, bwx, zhi, wx))
+                elif KE.get(bwx) == wx:
+                    add(i, 'huitouke', '回头克',
+                        '化出之%s（%s）克本爻%s（%s），为「回头克」——动而自伤，古称「化鬼」'
+                        % (bz, bwx, zhi, wx))
+                elif SHENG.get(wx) == bwx:
+                    add(i, 'huaxie', '化泄',
+                        '本爻%s（%s）生化出之%s（%s），为「化泄」——动而泄气，力有减损'
+                        % (zhi, wx, bz, bwx))
+
+            if bz and bz == MU.get(wx):
+                add(i, 'huamu', '化墓',
+                    '动而化入墓库%s——化墓者结局收敛，事虽成而难显' % bz)
+            if bz and bz == JUE.get(wx):
+                add(i, 'huajue', '化绝',
+                    '动而化%s为「化绝」——绝者气尽，古法视之为凶象之一' % bz)
+            if bz and bz in kong:
+                add(i, 'huakong', '化空',
+                    '动而化入旬空%s——化空者结局落空，须待出空' % bz)
+            if bz and CHONG.get(bz) == yue_zhi:
+                add(i, 'huapo', '化破',
+                    '化出之%s遭月建%s冲破——化破者结局破损' % (bz, yue_zhi))
+
+    # ---- 三合局 / 半合 / 拱合（须有动爻参与方成局）----
+    def _tag(z):
+        if z not in ben_set:
+            return z + '（化出）'
+        return z + '（动）' if zhi_moving.get(z) else z
+
+    combos = []
+    for trio, wx in SANHE.items():
+        trio_s = set(trio)
+        present = trio_s & zhi_set                       # 卦中实有的支
+        n_mv = sum(1 for z in trio_s if zhi_moving.get(z))
+        borrowed = None
+        if len(present) < 3:
+            for lbl, ez in ext_zhis.items():             # 借月建 / 日辰凑足
+                if ez in trio_s and (trio_s - {ez}) <= zhi_set:
+                    borrowed = lbl
+                    break
+        complete = (len(present) == 3) or (borrowed is not None)
+
+        if complete and n_mv >= 1:
+            where = [_tag(z) for z in trio if z in present]
+            tail = '，借%s凑足' % borrowed if borrowed else ''
+            if n_mv >= 2:
+                level, note = '成局', '动爻会聚，合化有力'
+            else:
+                level, note = '待成', '仅一爻动，须再动方成真局'
+            combos.append({'type': '三合局', 'wx': wx, 'level': level,
+                           'desc': '%s 三支%s，合化%s局%s——%s'
+                                   % ('·'.join(trio), '、'.join(where), wx, tail, note)})
+            continue
+
+        # 未成局：看两支的半合 / 拱合
+        for pair in _it.combinations(trio, 2):
+            if set(pair) <= zhi_set:
+                wang, mu_z = SANHE_PARTS[trio]
+                if wang in pair:
+                    kind = '生地半合'
+                elif mu_z in pair:
+                    kind = '墓地半合'
+                else:
+                    kind = '拱合'
+                lacks = (trio_s - set(pair)).pop()
+                if n_mv >= 1:
+                    tail = '有动爻参与，待%s值时可望成局' % lacks
+                    combos.append({'type': kind, 'wx': wx, 'level': '待合',
+                                   'desc': '%s·%s 为%s，缺%s一支——%s'
+                                           % (_tag(pair[0]), _tag(pair[1]), kind, lacks, tail)})
+                # 全静无动的半合 / 拱合：传统「不得作合论」，不输出
+                break
+
+    # ---- 三刑 / 自刑（只论本卦）----
+    xing = []
+    for a, b, c, nm in XING_TRIO:
+        if {a, b, c} <= ben_set:
+            xing.append({'name': nm, 'desc': '卦中%s·%s·%s 俱全，为「%s」——刑主动伤、纠葛与不顺'
+                                             % (a, b, c, nm)})
+    for pair, nm in XING_PAIR.items():
+        p = set(pair)
+        if p <= ben_set:
+            xing.append({'name': nm, 'desc': '卦中%s·%s 相见，为「%s」' % (tuple(p)[0], tuple(p)[1], nm)})
+    for z in ZI_XING:
+        if ben_zhis.count(z) >= 2:
+            xing.append({'name': '自刑', 'desc': '卦中%s 两见，为「自刑」——主自我纠结、内耗' % z})
+
+    # ---- 六害（相穿）：只论本卦，且须涉及动爻 ----
+    hai = []
+    for pair in HAI_PAIR:
+        p = set(pair)
+        if p <= ben_set and any(y.get('zhi') in p and y.get('moving') for y in ben_yao):
+            a, b = tuple(p)
+            hai.append({'name': '六害', 'desc': '卦中%s·%s 相害（相穿）——害主暗损、隔阂，其伤隐而不显'
+                                                % (a, b)})
+
+    return {'flags': flags, 'combos': combos, 'xing': xing, 'hai': hai}
+
+
 def compute_liuyao(yao6=None, category='其他', sex=None, dt=None, question=None):
     """主入口：起卦 → 装卦 → 变卦 → 参断（事实提取）。
 
@@ -377,6 +591,7 @@ def compute_liuyao(yao6=None, category='其他', sex=None, dt=None, question=Non
     # 变卦
     moving_idx = [i for i, m in enumerate(moving6) if m]
     bian = None
+    b_yao = None
     if moving_idx:
         b6 = [(1 - bit6[i]) if m else bit6[i] for i, m in enumerate(moving6)]
         info = lookup_gua(b6)
@@ -443,6 +658,14 @@ def compute_liuyao(yao6=None, category='其他', sex=None, dt=None, question=Non
                 y['wang'] = wangshuai_of(y['wx'], ZHI_WX.get(yue_zhi, ''))
                 fushen.append(y)
 
+    # ---- 进阶规则（暗动 / 入墓 / 化进退 / 三合刑害 …）----
+    key_pos = {ben['shi'] - 1, ben['ying'] - 1} | set(moving_idx)
+    if yong is not None:
+        key_pos.add(yong['pos'])
+    adv = detect_advanced(ben_yao, b_yao, moving_idx, yue_zhi, ri_zhi, kong, key_pos)
+    for i, y in enumerate(ben_yao):
+        y['flags'] = adv['flags'].get(i, [])
+
     # ---- 事实提取（不断吉凶）----
     facts = []
     facts.append({'k': '月建', 'v': yue_zhi + '月（' + ZHI_WX[yue_zhi] + '）',
@@ -493,6 +716,9 @@ def compute_liuyao(yao6=None, category='其他', sex=None, dt=None, question=Non
             r = _wx_relation(y['wx'], yong['wx']) if yong else ''
             if r:
                 fx.append(y['liuqin'] + '于用神为「' + r + '」')
+            for fg in (y.get('flags') or []):
+                if fg['code'] not in ('ruMu',):
+                    fx.append(y['pos_name'] + fg['name'])
         facts.append({'k': '动爻（' + str(len(mv)) + '）', 'v': desc,
                       'd': '；'.join(fx) if fx else '动爻主变化之机，须结合用神看'})
     else:
@@ -515,6 +741,7 @@ def compute_liuyao(yao6=None, category='其他', sex=None, dt=None, question=Non
     if all(CHONG.get(bz[i]) == bz[i + 3] for i in range(3)):
         struct.append('六冲卦：初四、二五、三上皆相冲，主变动急速、事难持久')
 
+    # 合局 / 刑 / 害由前端独立成卡渲染，此处不并入 struct
     return {
         'auto_cast': auto,
         'question': question,
@@ -536,6 +763,7 @@ def compute_liuyao(yao6=None, category='其他', sex=None, dt=None, question=Non
         'fushen': fushen,
         'facts': facts,
         'struct': struct,
+        'advanced': adv,
         'month_zhi': yue_zhi,
         'day_gz': day_gz,
         'xunkong': list(kong),
