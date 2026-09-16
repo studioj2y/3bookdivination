@@ -16,6 +16,11 @@ from datetime import datetime
 
 from lunar_python import Solar
 
+try:                    # 卦爻辞静态数据（通行本）。缺失时降级为不提供，不影响装卦。
+    import zhouyi
+except Exception:       # pragma: no cover - 仅在数据文件被剔除时触发
+    zhouyi = None
+
 # ---------------- 八卦基础 ----------------
 # 爻用 1=阳(—)、0=阴(--)；三爻按「初、中、上」顺序
 TRIGRAMS = {
@@ -154,6 +159,30 @@ TUI = {v: k for k, v in JIN.items()}
 MU = {'水': '辰', '木': '未', '火': '戌', '金': '丑', '土': '辰'}
 # 十二长生之「绝」
 JUE = {'木': '申', '火': '亥', '金': '寅', '水': '巳', '土': '巳'}
+
+# ---------------- 神煞（以日支起，三合局定位）----------------
+# 驿马：三合局长生位之冲。申子辰马在寅、寅午戌马在申、巳酉丑马在亥、亥卯未马在巳。
+YIMA = {}
+for _trio, _ma in ((('申', '子', '辰'), '寅'), (('寅', '午', '戌'), '申'),
+                   (('巳', '酉', '丑'), '亥'), (('亥', '卯', '未'), '巳')):
+    for _z in _trio:
+        YIMA[_z] = _ma
+# 桃花（咸池）：三合局沐浴位。申子辰在酉、寅午戌在卯、巳酉丑在午、亥卯未在子。
+TAOHUA = {}
+for _trio, _th in ((('申', '子', '辰'), '酉'), (('寅', '午', '戌'), '卯'),
+                   (('巳', '酉', '丑'), '午'), (('亥', '卯', '未'), '子')):
+    for _z in _trio:
+        TAOHUA[_z] = _th
+
+# 神煞释义与「何类所主」（只陈述传统所指，不作吉凶断言）
+SHENSHA_META = {
+    '驿马': {'desc': '驿马主动移、出行、奔波与职位迁转。以日支所属三合局取「长生位之冲」，'
+                     '如申子辰日马在寅。传统以「用神临马」与出行迁移之事相参。',
+             'cats': ('出行迁移',)},
+    '桃花': {'desc': '桃花（咸池）主人缘、情缘与外在名声。以日支所属三合局取「沐浴位」，'
+                     '如申子辰日桃花在酉。传统以「用神临桃花」与感情、交际之事相参。',
+             'cats': ('感情',)},
+}
 
 
 # ---------------- 卦表构建 ----------------
@@ -551,6 +580,178 @@ def detect_advanced(ben_yao, bian_yao, moving_idx, yue_zhi, ri_zhi, kong, key_po
     return {'flags': flags, 'combos': combos, 'xing': xing, 'hai': hai}
 
 
+# ---------------- 飞神 / 伏神 ----------------
+FEI_FU_REL = {
+    'fly_sheng': ('飞生伏', '飞神生伏神——伏神得飞神之助，出而有力'),
+    'fu_sheng': ('伏生飞', '伏神生飞神——伏神泄气于飞神，出而乏力'),
+    'fly_ke': ('飞克伏', '飞神克伏神——伏神受制，古法须待冲去飞神之期方显'),
+    'fu_ke': ('伏克飞', '伏神克飞神——古称「伏克飞神，伏神得出」'),
+    'he': ('飞伏比和', '飞伏同气比和——伏神不受伤，可待时而动'),
+}
+
+
+def fufu_relation(fei_wx, fu_wx):
+    """飞神与伏神的五行关系。"""
+    if not fei_wx or not fu_wx:
+        return None
+    if fei_wx == fu_wx:
+        return FEI_FU_REL['he']
+    if SHENG.get(fei_wx) == fu_wx:
+        return FEI_FU_REL['fly_sheng']
+    if SHENG.get(fu_wx) == fei_wx:
+        return FEI_FU_REL['fu_sheng']
+    if KE.get(fei_wx) == fu_wx:
+        return FEI_FU_REL['fly_ke']
+    if KE.get(fu_wx) == fei_wx:
+        return FEI_FU_REL['fu_ke']
+    return None
+
+
+def fushen_note(fei, fu):
+    """伏神「能否出现」的传统判据摘要：只陈述规则与卦中实有的事实。"""
+    pts = []
+    rel = fufu_relation(fei.get('wx'), fu.get('wx'))
+    if rel:
+        pts.append(rel[0] + '（' + rel[1].split('——')[-1] + '）')
+    w = fu.get('wang')
+    if w in ('旺', '相'):
+        pts.append('伏神' + w + '相、气足易出')
+    elif w in ('休', '囚', '死'):
+        pts.append('伏神' + w + '、气弱难出')
+    if fu.get('is_kong'):
+        pts.append('伏神旬空，虽伏亦虚，须待出空')
+    if fei.get('is_kong'):
+        pts.append('飞神旬空，伏神易透')
+    if fei.get('is_yuepo') or fei.get('is_richong'):
+        pts.append('飞神受月破／日冲，伏神易出')
+    if fu.get('is_yuepo'):
+        pts.append('伏神月破，出而无力')
+    return '；'.join(pts)
+
+
+# ---------------- 神煞（以日支起）----------------
+def shensha_of(ben_yao, ri_zhi, category=None):
+    """以日支查驿马 / 桃花，列出卦中是否有该支之爻。
+
+    只列「卦中确有此支、在第几位」这一可核对的事实，并附传统所指，
+    不作吉凶断言。传统亦有以年支起神煞者，此处从六爻常用的日支取法。
+    """
+    out = []
+    for nm, table in (('驿马', YIMA), ('桃花', TAOHUA)):
+        z = table.get(ri_zhi)
+        if not z:
+            continue
+        hits = [y for y in ben_yao if y.get('zhi') == z]
+        meta = SHENSHA_META[nm]
+        out.append({
+            'name': nm,
+            'zhi': z,
+            'from': '日支 ' + ri_zhi,
+            'hits': [{'pos': y.get('pos'), 'pos_name': y.get('pos_name', ''),
+                      'liuqin': y.get('liuqin', ''), 'ganzhi': y.get('ganzhi', ''),
+                      'wx': y.get('wx', ''),
+                      'moving': bool(y.get('moving')), 'is_shi': bool(y.get('is_shi')),
+                      'is_ying': bool(y.get('is_ying')), 'is_kong': y.get('is_kong'),
+                      'is_yuepo': y.get('is_yuepo')}
+                     for y in hits],
+            'desc': meta['desc'],
+            'rel_cat': bool(category and category in meta['cats']),
+        })
+    return out
+
+
+# ---------------- 应期线索 ----------------
+def yingqi_of(yong, ben_yao, moving_idx, yue_zhi, ri_zhi, kong, fushen=None):
+    """应期线索：按传统「值、冲、合、出空、冲墓」的推法列出时点参照。
+
+    严格只做「条件 → 时点」的规则映射，不说「何时必然应验」。
+    返回 [{'k': 触发条件, 'v': 时点参照, 'd': 传统推法说明}, ...]
+    """
+    out = []
+    if not yong:
+        # 用神不现：给伏神的「出伏」线索（值日值月自透 / 冲开飞神）
+        for f in (fushen or []):
+            fei = f.get('fei') or {}
+            fz, fzhi = fei.get('zhi', ''), fei.get('ganzhi', '')
+            out.append({
+                'k': '伏神 ' + f['pos_name'] + ' ' + f['liuqin'],
+                'v': '逢 %s 值日／值月自透，或逢 %s 日冲去飞神%s'
+                     % (f.get('zhi', ''), CHONG.get(fz, '—'), ('（' + fzhi + '）') if fzhi else ''),
+                'd': '用神伏藏，传统须待其「值日、值月」而自透，或「冲开飞神」而出。'
+                     '飞伏关系：%s' % (f.get('rel_desc') or '—'),
+            })
+            mu = MU.get(f.get('wx'))
+            if mu and mu in (yue_zhi, ri_zhi):
+                out.append({
+                    'k': '伏神入墓',
+                    'v': '逢 %s 日／月冲开墓库' % CHONG.get(mu, '—'),
+                    'd': '伏而入墓，须待冲墓之期方显。',
+                })
+        if not out:
+            out.append({
+                'k': '用神不现',
+                'v': '本卦无此六亲，亦无可取伏神',
+                'd': '传统多取世爻兼看应爻为参，不另推应期。',
+            })
+        return out
+
+    zhi = yong.get('zhi', '')
+    wx = yong.get('wx', '')
+
+    if zhi and yong.get('is_kong'):
+        out.append({
+            'k': '用神旬空',
+            'v': '逢 %s 值日／值月为「填实」，或逢 %s 日冲起为「冲空」'
+                 % (zhi, CHONG.get(zhi, '—')),
+            'd': '空者待实：本支当值之日、当月即填实；被其冲支冲动之日则冲空。'
+                 '古法以「空逢填而用、逢冲而实」为出空之候。',
+        })
+    if zhi and yong.get('is_yuepo'):
+        out.append({
+            'k': '用神月破',
+            'v': '出 %s 月（交下一节气）后即不破，或逢 %s 日合之'
+                 % (yue_zhi, HE6.get(zhi, '—')),
+            'd': '月破所破在后天（月建）而非自身。出月则破自解；'
+                 '古亦有「破而逢合则有用」之说。',
+        })
+    mu = MU.get(wx)
+    if mu and mu in (yue_zhi, ri_zhi):
+        out.append({
+            'k': '用神入墓',
+            'v': '逢 %s 日／月冲开墓库（%s 之冲为 %s）'
+                 % (CHONG.get(mu, '—'), mu, CHONG.get(mu, '—')),
+            'd': '入墓者力藏不显。传统以「冲墓」之支为出墓之候，'
+                 '即墓库之冲支值日、值月之时。',
+        })
+    if yong.get('moving'):
+        out.append({
+            'k': '用神发动',
+            'v': '逢 %s 值日／值月' % (zhi or '—'),
+            'd': '动爻为事之机。古法多以「动爻值日、值月」为其发用之时；'
+                 '亦有「动而逢合则应、逢冲则散」两说。',
+        })
+
+    yong_pos = yong.get('pos')
+    for i in moving_idx:
+        if i == yong_pos:
+            continue
+        y = ben_yao[i]
+        out.append({
+            'k': '动爻 ' + y['pos_name'],
+            'v': '逢 %s（%s）值日／值月' % (y['zhi'], y['liuqin']),
+            'd': '动爻为事之发动处，传统以该支值日、值月为事应之候。',
+        })
+
+    if not out:
+        out.append({
+            'k': '用神安静',
+            'v': '逢 %s 值日／值月，或逢 %s 日冲动' % (zhi, CHONG.get(zhi, '—')),
+            'd': '静爻待动：古法以「静者逢值、逢冲」为应期之候。'
+                 '本条仅为传统推法参照，不作断言。',
+        })
+    return out
+
+
 def compute_liuyao(yao6=None, category='其他', sex=None, dt=None, question=None):
     """主入口：起卦 → 装卦 → 变卦 → 参断（事实提取）。
 
@@ -631,6 +832,7 @@ def compute_liuyao(yao6=None, category='其他', sex=None, dt=None, question=Non
     shi_yao = ben_yao[ben['shi'] - 1]
     ying_yao = ben_yao[ben['ying'] - 1]
 
+    yong_cands = []
     if ys_name is None:
         yong = shi_yao
         ys_label = '世爻（' + shi_yao['liuqin'] + '）'
@@ -640,23 +842,71 @@ def compute_liuyao(yao6=None, category='其他', sex=None, dt=None, question=Non
             yong = None
             ys_label = ys_name + '（卦中不现，须查伏神）'
         else:
-            # 多现取旺相优先、动爻次之、持世再次
+            # 用神两现时的取用次序（传统）：先舍空破取其可用者，次取临世应者，
+            # 再取发动者（事之机），末以旺相定之。次序本身即为可核对的判据。
             rank = {'旺': 4, '相': 3, '休': 2, '囚': 1, '死': 0}
-            cands.sort(key=lambda y: (rank.get(y['wang'], 0), y['moving'], y['is_shi']), reverse=True)
+
+            def _ys_rank(y):
+                return (0 if (y['is_kong'] or y['is_yuepo']) else 1,
+                        1 if (y['is_shi'] or y['is_ying']) else 0,
+                        1 if y['moving'] else 0,
+                        rank.get(y['wang'], 0))
+
+            cands = sorted(cands, key=_ys_rank, reverse=True)
             yong = cands[0]
             ys_label = ys_name
+            if len(cands) > 1:
+                yong_cands = [{
+                    'pos': y['pos'], 'pos_name': y['pos_name'], 'ganzhi': y['ganzhi'],
+                    'liuqin': y['liuqin'], 'wang': y['wang'], 'moving': bool(y['moving']),
+                    'is_shi': bool(y['is_shi']), 'is_ying': bool(y['is_ying']),
+                    'is_kong': y['is_kong'], 'is_yuepo': y['is_yuepo'],
+                    'chosen': (y is yong),
+                } for y in cands]
+
+    # 取用理由（只在两现时给出，便于核对为何取此爻）
+    yong_reason = ''
+    if yong_cands and yong is not None:
+        why = []
+        if not (yong['is_kong'] or yong['is_yuepo']):
+            why.append('不空不破')
+        if yong['is_shi']:
+            why.append('临世')
+        elif yong['is_ying']:
+            why.append('临应')
+        if yong['moving']:
+            why.append('发动')
+        why.append('旺衰为「' + (yong['wang'] or '—') + '」')
+        yong_reason = ('用神两现（共 %d 处），按「舍空破 → 取临世应 → 取动 → 取旺」'
+                       '取 %s %s %s（%s）'
+                       % (len(yong_cands), yong['pos_name'], yong['ganzhi'],
+                          yong['liuqin'], '、'.join(why)))
 
     # 伏神：用神不上卦时，取本宫纯卦同六亲之爻为伏（传统「伏神法」）
+    # 伏神所在爻位在本卦的对应爻即「飞神」，飞伏生克决定伏神能否透出。
     fushen = []
     if yong is None and ys_name:
         pure = list(TRIGRAMS[gong]) * 2
         pure_yao = zhuang_gua(pure, [False] * 6, gong_wx, yue_zhi, ri_zhi, kong)
         for y in pure_yao:
             if y['liuqin'] == ys_name:
-                y = dict(y)
-                y['from'] = '本宫' + GONG_NAMES[gong][0]
-                y['wang'] = wangshuai_of(y['wx'], ZHI_WX.get(yue_zhi, ''))
-                fushen.append(y)
+                f = dict(y)
+                f['from'] = '本宫' + GONG_NAMES[gong][0]
+                f['wang'] = wangshuai_of(f['wx'], ZHI_WX.get(yue_zhi, ''))
+                fei = ben_yao[f['pos']]
+                f['fei'] = {
+                    'pos': fei['pos'], 'pos_name': fei['pos_name'], 'ganzhi': fei['ganzhi'],
+                    'zhi': fei['zhi'], 'wx': fei['wx'], 'liuqin': fei['liuqin'],
+                    'wang': fei['wang'], 'moving': bool(fei['moving']),
+                    'is_shi': bool(fei['is_shi']), 'is_ying': bool(fei['is_ying']),
+                    'is_kong': fei['is_kong'], 'is_yuepo': fei['is_yuepo'],
+                    'is_richong': fei['is_richong'],
+                }
+                rel = fufu_relation(fei['wx'], f['wx'])
+                f['rel'] = rel[0] if rel else ''
+                f['rel_desc'] = rel[1] if rel else ''
+                f['note'] = fushen_note(fei, f)
+                fushen.append(f)
 
     # ---- 进阶规则（暗动 / 入墓 / 化进退 / 三合刑害 …）----
     key_pos = {ben['shi'] - 1, ben['ying'] - 1} | set(moving_idx)
@@ -733,13 +983,52 @@ def compute_liuyao(yao6=None, category='其他', sex=None, dt=None, question=Non
         struct.append('归魂卦：传统主事情回归、宜守成而不宜远行')
     if len([y for y in ben_yao if y['is_kong']]) >= 3:
         struct.append('卦中旬空之爻较多，多主人事未定、时机未到')
-    # 内外卦六合（卦之六合：天地否? 不，是卦变六合）—— 简化：内外卦天爻地爻相合
-    low_t, up_t = yao6[2], yao6[5]
-    low_d, up_d = yao6[0], yao6[3]
-    # 用六冲卦检测：初四、二五、三上皆冲
+    # 六冲卦 / 六合卦：初四、二五、三上三组同论
     bz = [ben_yao[i]['zhi'] for i in range(6)]
     if all(CHONG.get(bz[i]) == bz[i + 3] for i in range(3)):
         struct.append('六冲卦：初四、二五、三上皆相冲，主变动急速、事难持久')
+    if all(HE6.get(bz[i]) == bz[i + 3] for i in range(3)):
+        struct.append('六合卦：初四、二五、三上皆相合，主事体胶着、缠绵难解')
+
+    # 独发 / 独静：动爻个数本身即是可核对的结构事实
+    n_mv = len(moving_idx)
+    if n_mv == 1:
+        i = moving_idx[0]
+        struct.append('独发：六爻中唯「%s %s」一爻发动。古法「独发之爻，事之主也」，'
+                      '多以此一爻为事机所在' % (ben_yao[i]['pos_name'], ben_yao[i]['liuqin']))
+    elif n_mv == 5:
+        j = [i for i in range(6) if i not in moving_idx][0]
+        struct.append('独静：五爻皆动而唯「%s %s」独静。古法以静者为众动之所归、'
+                      '为一卦之定处' % (ben_yao[j]['pos_name'], ben_yao[j]['liuqin']))
+    elif n_mv == 6:
+        struct.append('六爻皆动（古称「六爻乱动」）：变数极多、事绪纷杂，'
+                      '传统多劝静观其变而不骤断')
+
+    # ---- 神煞（驿马 / 桃花）：以日支起 ----
+    shensha = shensha_of(ben_yao, ri_zhi, category)
+    if yong is not None:
+        for s in shensha:
+            s['on_yong'] = any(h['pos'] == yong['pos'] for h in s['hits'])
+
+    # ---- 应期线索（只做「条件 → 时点」的规则映射）----
+    yingqi = yingqi_of(yong, ben_yao, moving_idx, yue_zhi, ri_zhi, kong, fushen)
+
+    # ---- 卦爻辞（通行本，静态数据；异文从略）----
+    text = None
+    if zhouyi:
+        bt = zhouyi.gua_text(ben['name'])
+        if bt:
+            text = {
+                'name': ben['name'], 'ci': bt['ci'], 'xiang': bt['xiang'],
+                'note': bt.get('note', ''),
+                'yao': bt['yao'],
+                'moving_yao': [y for y in bt['yao'] if y['pos'] in moving_idx],
+            }
+            if bian:
+                btx = zhouyi.gua_text(bian['name'])
+                if btx:
+                    text['bian_name'] = bian['name']
+                    text['bian_ci'] = btx['ci']
 
     # 合局 / 刑 / 害由前端独立成卡渲染，此处不并入 struct
     return {
@@ -759,11 +1048,16 @@ def compute_liuyao(yao6=None, category='其他', sex=None, dt=None, question=Non
             'is_kong': yong['is_kong'] if yong else None,
             'is_yuepo': yong['is_yuepo'] if yong else None,
             'is_shi': yong['is_shi'] if yong else None,
+            'reason': yong_reason,
+            'cands': yong_cands,
         },
         'fushen': fushen,
         'facts': facts,
         'struct': struct,
         'advanced': adv,
+        'shensha': shensha,
+        'yingqi': yingqi,
+        'text': text,
         'month_zhi': yue_zhi,
         'day_gz': day_gz,
         'xunkong': list(kong),

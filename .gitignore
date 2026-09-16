@@ -7,6 +7,8 @@ venv/
 .env
 
 # 本地开发 / 临时
+# 约定：本仓库所有临时文件（探针 / 补丁脚本 / 备份 / 中间产物）一律以 "_" 开头，永不提交
+_*
 _served.html
 _chk.js
 served_check.html

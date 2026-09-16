@@ -55,6 +55,13 @@ async function clickAt(x, y){
 // ⚠ 教训：早先直接拿 getBoundingClientRect 的中心去点，长页面里「折叠下方」的元素坐标在屏外，
 //   点击会静默落空（而 display:none 的元素 rect 全 0，点 (0,0) 同样静默失败）⇒ 回归结果随机飘。
 //   已可见的元素不做任何延时，保证 B10「首击即生效」这类时序断言不被削弱。
+// 中心点是否真的落在该元素（或其子树）上。用于识破「rect 在视口内、但被祖先 overflow 裁掉」
+// 与「被别的元素盖住」两种情况——它们都会让点击静默打偏。
+async function hitIs(sel, x, y){
+  return js(`var e=document.querySelector(${JSON.stringify(sel)}); if(!e) return false;
+    var hit=document.elementFromPoint(${x}, ${y});
+    return !!(hit && (hit === e || e.contains(hit)));`);
+}
 async function clickSel(sel){
   const st = await js(`var e=document.querySelector(${JSON.stringify(sel)}); if(!e) return null;
     var r=e.getBoundingClientRect();
@@ -63,8 +70,16 @@ async function clickSel(sel){
     return {vis:vis};`);
   if (!st) return false;
   if (!st.vis) await sleep(140);
-  const r = await rect(sel);
+  let r = await rect(sel);
   if (!r || r.w < 1 || r.h < 1) return false;   // 0×0 ⇒ display:none，明确算失败而不是乱点
+  // 视口可见 ≠ 点得到：再复核一次真实命中。已能命中的元素不加延时（保住 B10 的时序严格度）
+  if (!(await hitIs(sel, r.x, r.y))){
+    await js(`var e=document.querySelector(${JSON.stringify(sel)});
+      if(e) e.scrollIntoView({block:'center', inline:'center'}); return 1;`);
+    await sleep(140);
+    r = await rect(sel);
+    if (!r || r.w < 1 || r.h < 1) return false;
+  }
   await clickAt(r.x, r.y); return true;
 }
 async function waitFor(expr, ms = 6000, step = 100){ const t0 = Date.now();
@@ -90,6 +105,10 @@ await send("Emulation.setDeviceMetricsOverride", { width:1440, height:900, devic
 loaded = false; await send("Page.navigate", { url:BASE + "/" });
 for (let i = 0; i < 120 && !loaded; i++) await sleep(100);
 await waitFor("window.phase==='intro'", 5000);
+
+// 占卦本存在 localStorage（ly_book_v1）且会跨次累积：不清空则列表越来越长、内滚越来越深，
+// 既让「条目数」不可预期，也放大「点在前朝坐标上」的概率。
+await js("try{localStorage.removeItem('ly_book_v1');}catch(e){} return 1");
 
 check("A7 引导期光标挂在 body（#gl 无 pointer-events 时仍生效）",
   await js("return document.body.style.cursor === 'pointer'"), "body.cursor=" + await js("return document.body.style.cursor || '(空)'"));
@@ -257,6 +276,146 @@ check("B9 返回书架收起全部功能页",
   JSON.stringify(await js(PANELS)));
 await shot("03-liuyao-result");
 
+// ==================== 六爻 新增能力（第一/二/三档） ====================
+console.log("\n--- 六爻 新增能力 ---");
+await waitFor("document.getElementById('books').classList.contains('ready')", 9000);
+await clickSel('.book[data-idx="3"]');
+await waitFor("document.getElementById('liuyaoPanel').classList.contains('show')", 4000);
+await sleep(300);
+
+// 1) 一键摇卦（后端自动掷六次，跳过逐掷动画）
+await clickSel("#lyQuick");
+const qMs = await waitFor("!!document.querySelector('#lyResult .ly-board svg')", 15000);
+await sleep(400);
+// ⚠ 一键摇卦的卦局由后端 auto_cast 决定（前端 lyRand 只负责铜钱动画），无法预热成「必有动爻」
+//   ⇒ 断言只取两种情况都成立的不变量：本卦必 6 爻行，变卦有则再 +6；连线数=动爻标记数
+const q = await js(`var svg=document.querySelector('#lyResult .ly-board svg');
+  return {
+  board: !!svg,
+  bars: svg?svg.querySelectorAll('rect').length:0,
+  moves: document.querySelectorAll('#lyResult .ly-mvmark').length,
+  links: svg?svg.querySelectorAll('line.lb-link').length:0,
+  yaoRows: document.querySelectorAll('#lyResult .ly-yao').length,
+  guaBoxes: document.querySelectorAll('#lyResult .ly-guabox').length,
+  cards: document.querySelectorAll('#lyResult .ly-card').length,
+  quickBadge: document.getElementById('lyResult').textContent.indexOf('快速起卦') >= 0,
+  saveBtn: !!document.getElementById('lySave'),
+  castHidden: getComputedStyle(document.getElementById('lyCast')).display === 'none'};`);
+check("新增·一键摇卦直出结果页（卦盘 + 爻位 + 卡片 + 导出按钮 + 快速起卦标记）",
+  qMs > 0 && q.board && q.bars >= 6
+  && (q.guaBoxes === 1 || q.guaBoxes === 2) && q.yaoRows === q.guaBoxes * 6
+  && q.links === q.moves && q.cards >= 6
+  && q.quickBadge && q.saveBtn && q.castHidden, JSON.stringify(q));
+
+// 2) 卦盘结构：每爻一组，动爻有连线；分组数 = 本卦6(+变卦6)
+const bi = await js(`var svg=document.querySelector('#lyResult .ly-board svg'); if(!svg) return null;
+  return {g:svg.querySelectorAll('g').length, anim:svg.querySelectorAll('.lb-anim').length,
+    links:svg.querySelectorAll('line.lb-link').length,
+    moves:document.querySelectorAll('#lyResult .ly-mvmark').length,
+    bian:!!document.querySelector('#lyResult .ly-guabox:nth-of-type(2)') || svg.textContent.indexOf('六静无变')>=0 ? 1 : 0,
+    viewBox:svg.getAttribute('viewBox'), hasLabel:svg.textContent.indexOf('本卦')>=0};`);
+const wantAnim = (await js("return document.querySelectorAll('#lyResult .ly-guabox').length")) === 2 ? 12 : 6;
+check("新增·卦盘结构（爻分组数正确、动爻连线数=动爻数）",
+  !!bi && bi.anim === wantAnim && bi.links === bi.moves && bi.hasLabel
+  && /^0 0 \d+ \d+$/.test(bi.viewBox), JSON.stringify(bi) + " 期望分组 " + wantAnim);
+
+// 3) 术语可点（六亲 / 六神 / 旺衰 / 纳甲）
+await js("document.getElementById('toast').classList.remove('show'); return 1");
+await clickSel("#lyResult .ly-yaomid .lq");
+await sleep(350);
+const term = await js("return {shown:document.getElementById('toast').classList.contains('show'), text:document.getElementById('toast').textContent};");
+check("新增·术语「六亲」可点 → 弹出释义",
+  term.shown && term.text.indexOf("六亲：") === 0 && term.text.length > 40, JSON.stringify(term));
+
+await js("document.getElementById('toast').classList.remove('show'); return 1");
+await clickSel('#lyResult .ly-term[data-term="wang"]');
+await sleep(350);
+const term2 = await js("return {shown:document.getElementById('toast').classList.contains('show'), text:document.getElementById('toast').textContent};");
+check("新增·术语「旺衰」可点 → 弹出释义（含旺相休囚死）",
+  term2.shown && term2.text.indexOf("旺衰：") === 0 && term2.text.indexOf("休囚死") > 0, JSON.stringify(term2));
+
+// 4) 同卦另断：同一卦体换类别 → 换用神
+await js("window.__yaoBefore = JSON.stringify(lyYaos); document.getElementById('toast').classList.remove('show'); return 1");
+const chip0 = await js("var c=document.querySelector('#lyResult .ly-recast[data-cat]'); return c ? c.dataset.cat : null");
+const chipN = await js("return document.querySelectorAll('#lyResult .ly-recast[data-cat]').length");
+const chipClicked = await clickSel('#lyResult .ly-recast[data-cat]');
+const rcMs = await waitFor("lyCategory.value === " + JSON.stringify(chip0), 12000);
+await sleep(400);
+const rc = await js(`var g=document.getElementById('lyResult').querySelector('.ly-guahead');
+  var fk=document.querySelector('#lyResult .ly-facts .fk');
+  return {cat:lyCategory.value, head:g?g.textContent:'', yaoSame:JSON.stringify(lyYaos)===window.__yaoBefore,
+    boards:document.querySelectorAll('#lyResult .ly-board svg').length,
+    ysLabel:fk?fk.textContent:''};`);
+check("新增·同卦另断（卦体不变、类别与用神随换）",
+  chipClicked && chipN === 9 && rcMs > 0 && rc.cat === chip0 && rc.head.indexOf(chip0) >= 0
+  && rc.yaoSame && rc.boards === 1 && !!rc.ysLabel,
+  "chip=" + chip0 + "/9 点击=" + chipClicked + " " + JSON.stringify(rc));
+
+// 5) 第二档卡片：以后端返回 + 占卦本存档为准做交叉核对
+const exp = await js(`var b=JSON.parse(localStorage.getItem('ly_book_v1')||'[]'); var p=b[0]&&b[0].payload;
+  if(!p) return null;
+  return {ss:(p.shensha||[]).some(function(s){return (s.hits||[]).length>0}),
+    yq:(p.yingqi||[]).length>0, text:!!p.text, details:!!p.text && (p.text.yao||[]).length===6};`);
+const dom = await js(`var t=document.getElementById('lyResult').textContent;
+  return {ss:!!document.querySelector('#lyResult .ly-term[data-term="shensha"]'),
+    yq:!!document.querySelector('#lyResult .ly-term[data-term="yingqi"]'),
+    text:t.indexOf('卦爻辞 · 通行本')>=0,
+    details:!!document.querySelector('#lyResult details'),
+    yao6:(document.querySelectorAll('#lyResult details .at').length)};`);
+check("新增·第二档卡片按数据到位（神煞/应期/卦爻辞）",
+  !!exp && !!dom && dom.ss === exp.ss && dom.yq === exp.yq && dom.text === exp.text
+  && (exp.details ? dom.details && dom.yao6 === 6 : true),
+  "期望 " + JSON.stringify(exp) + " 实际 " + JSON.stringify(dom));
+
+// 6) 占卦本
+const bk = await (async () => {
+  await clickSel("#lyResult #lyBookR");   // 结果页入口；起卦页那个 #lyBookBtn 此刻是 0×0
+  await sleep(400);
+  return js(`return {shown:getComputedStyle(document.getElementById('lyBook')).display !== 'none',
+    resHidden:getComputedStyle(document.getElementById('lyResult')).display === 'none',
+    items:document.querySelectorAll('#lyBook .ly-bk-item').length,
+    saved:(JSON.parse(localStorage.getItem('ly_book_v1')||'[]')).length};`);
+})();
+check("新增·占卦本可打开，条目数与存储一致",
+  bk.shown && bk.resHidden && bk.items > 0 && bk.items === bk.saved, JSON.stringify(bk));
+
+const itemClicked = await clickSel("#lyBook .ly-bk-item");
+await waitFor("getComputedStyle(document.getElementById('lyResult')).display !== 'none'", 4000);
+await sleep(250);
+const bkOpen = await js(`return {resShown:getComputedStyle(document.getElementById('lyResult')).display !== 'none',
+  board:!!document.querySelector('#lyResult .ly-board svg'),
+  note:document.getElementById('lyResult').textContent.indexOf('占卦本复看') >= 0};`);
+bkOpen.clicked = itemClicked;
+check("新增·点占卦本条目可复看（结果页重建、不重复入账）",
+  itemClicked && bkOpen.resShown && bkOpen.board && bkOpen.note, JSON.stringify(bkOpen));
+
+// 7) 导出长图：真跑 SVG → Image → canvas → PNG 全链路（不触发下载）
+const ex = await js(`return (async function(){
+  try{
+    var b=JSON.parse(localStorage.getItem('ly_book_v1')||'[]'); var p=b[0]&&b[0].payload;
+    if(!p) return {err:'无存档'};
+    var svg=lyCardSVG(p);
+    var m=svg.match(/width="(\\d+)" height="(\\d+)"/); if(!m) return {err:'SVG 无尺寸'};
+    var W=+m[1], H=+m[2];
+    var url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
+    var img=new Image();
+    await new Promise(function(res,rej){ img.onload=res; img.onerror=function(){rej(new Error('svg load fail'))}; img.src=url; });
+    var cv=document.createElement('canvas'); cv.width=W*2; cv.height=H*2;
+    var ctx=cv.getContext('2d'); ctx.fillStyle='#0d0722'; ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.drawImage(img,0,0,cv.width,cv.height);
+    var blob=await new Promise(function(r){ cv.toBlob(r,'image/png'); });
+    URL.revokeObjectURL(url);
+    return {W:W,H:H,png:blob?blob.size:0,svgLen:svg.length,
+      hasName:svg.indexOf(p.ben.name)>=0,hasYq:svg.indexOf('应期线索')>=0,
+      hasBoard:svg.indexOf('<svg x=')>=0};
+  }catch(e){ return {err:String((e&&e.message)||e)}; }
+})()`);
+check("新增·导出长图 SVG→PNG 全链路可用（含卦盘内嵌）",
+  !!ex && !ex.err && ex.W === 720 && ex.H > 600 && ex.png > 20000 && ex.hasName && ex.hasBoard,
+  JSON.stringify(ex));
+await shot("07-liuyao-new-desktop");
+await clickSel("#fpBack"); await sleep(400);
+
 // ==================== 手机 390x844 ====================
 console.log("\n--- 手机 390x844 ---");
 await send("Emulation.setDeviceMetricsOverride", { width:390, height:844, deviceScaleFactor:1, mobile:true });
@@ -264,6 +423,10 @@ await send("Emulation.setTouchEmulationEnabled", { enabled:true, maxTouchPoints:
 loaded = false; await send("Page.navigate", { url:BASE + "/" });
 for (let i = 0; i < 120 && !loaded; i++) await sleep(100);
 await waitFor("window.phase==='intro'", 5000);
+
+// 占卦本存在 localStorage（ly_book_v1）且会跨次累积：不清空则列表越来越长、内滚越来越深，
+// 既让「条目数」不可预期，也放大「点在前朝坐标上」的概率。
+await js("try{localStorage.removeItem('ly_book_v1');}catch(e){} return 1");
 await clickSel("#skip");
 await waitFor("document.getElementById('books').classList.contains('ready')", 9000);
 
@@ -329,6 +492,31 @@ if (ins && ins.error){
   await shot("06-mobile-safearea");
   await send("Emulation.setSafeAreaInsetsOverride", { insets:{ top:0, bottom:0, left:0, right:0 } });
 }
+
+// 新增：手机端卦盘自适应 + 同卦另断 chip 可点
+await clickSel("#fpBack"); await sleep(400);
+await waitFor("document.getElementById('books').classList.contains('ready')", 9000);
+await clickSel('.book[data-idx="3"]');
+await waitFor("document.getElementById('liuyaoPanel').classList.contains('show')", 4000);
+await sleep(300);
+await clickSel("#lyQuick");
+const mMs = await waitFor("!!document.querySelector('#lyResult .ly-board svg')", 15000);
+await sleep(500);
+const mb = await js(`var svg=document.querySelector('#lyResult .ly-board svg'); if(!svg) return null;
+  var r=svg.getBoundingClientRect(), par=svg.parentElement.getBoundingClientRect();
+  var chip=document.querySelector('#lyResult .ly-recast[data-cat]');
+  var cr=chip?chip.getBoundingClientRect():null;
+  var rb=document.getElementById('lyBookR'); var rbr=rb?rb.getBoundingClientRect():null;
+  var fp=document.getElementById('funcpage');
+  return {w:Math.round(r.width), parW:Math.round(par.width), h:Math.round(r.height),
+    fits:r.width <= par.width + 1, noOverflow:fp.scrollWidth <= innerWidth + 1,
+    chips:document.querySelectorAll('#lyResult .ly-recast[data-cat]').length,
+    chipH:cr?Math.round(cr.height):0,
+    bookBtn:!!(rbr && rbr.width>0 && rbr.height>=18 && rbr.right<=innerWidth+1)};`);
+check("新增·手机端卦盘自适应（不溢出、同卦另断 chip 与占卦本入口可点）",
+  !!mb && mMs > 0 && mb.fits && mb.noOverflow && mb.h > 150
+  && mb.chips === 9 && mb.chipH >= 18 && mb.bookBtn, JSON.stringify(mb));
+await shot("08-liuyao-new-mobile");
 
 const fail = results.filter(r => !r.pass);
 console.log("\n===== 汇总：" + (results.length - fail.length) + " PASS / " + fail.length + " FAIL =====");
