@@ -10,6 +10,7 @@ venv/
 _served.html
 _chk.js
 served_check.html
+_shots/
 
 # 非发布素材（原型与交接文档不进仓库）
 crystal-app-prototype.html

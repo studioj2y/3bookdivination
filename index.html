@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-page-node-id="HzF19vGOW2RYxcDz1DBasv">
 <head data-page-node-id="jKQAlk3tXNWBfP0Ap7MnwX">
 <meta charset="utf-8" data-page-node-id="pAKa7ChYGDpPvRCUTOn3wC"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" data-page-node-id="K4XwpDGXZLUdZVGxvK8ZpG"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" data-page-node-id="K4XwpDGXZLUdZVGxvK8ZpG"/>
 <title>超级银河自动算命机高级版II型强化式样</title>
 <style>
   html,body{margin:0;height:100%;background:#000;overflow:hidden;
@@ -16,28 +16,48 @@
     radial-gradient(130% 90% at 50% 118%, rgba(46,30,16,.5), rgba(10,7,13,0) 58%),
     radial-gradient(80% 60% at 50% 58%, rgba(22,15,32,.35), rgba(0,0,0,0) 70%),
     linear-gradient(to bottom, rgba(0,0,0,0) 52%, rgba(14,9,6,.72) 100%);}
-  #ver{position:fixed;right:12px;bottom:8px;font-size:11px;color:rgba(200,180,255,.30);letter-spacing:.08em;z-index:9;pointer-events:none;}
-  #hint{position:fixed;left:0;right:0;bottom:9%;text-align:center;color:#cdb8ff;
+  #ver{position:fixed;right:calc(12px + env(safe-area-inset-right));bottom:calc(8px + env(safe-area-inset-bottom));font-size:11px;color:rgba(200,180,255,.30);letter-spacing:.08em;z-index:7;pointer-events:none;}
+  #hint{position:fixed;left:0;right:0;bottom:calc(9% + env(safe-area-inset-bottom));text-align:center;color:#cdb8ff;
     font-size:14px;letter-spacing:.25em;opacity:0;transition:opacity .8s;
     pointer-events:none;text-shadow:0 0 14px rgba(150,110,255,.7);z-index:8;}
-  .btn{position:fixed;top:14px;z-index:8;background:rgba(40,20,70,.45);color:#d9c9ff;
+  .btn{position:fixed;top:calc(14px + env(safe-area-inset-top));z-index:7;background:rgba(40,20,70,.45);color:#d9c9ff;
     border:1px solid rgba(160,120,255,.4);border-radius:20px;padding:6px 14px;
-    font-size:13px;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
-  #replay{right:14px;display:none;}
-  #skip{left:14px;}
+    font-size:13px;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+    display:inline-flex;align-items:center;justify-content:center;}
+  #replay{right:calc(14px + env(safe-area-inset-right));display:none;}
+  #skip{left:calc(14px + env(safe-area-inset-left));}
   #fallback{position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-    color:#cbb8ff;font-size:15px;text-align:center;z-index:9;padding:24px;}
+    color:#cbb8ff;font-size:15px;text-align:center;z-index:90;padding:24px;}
+  /* 轻提示：未开放的书 / 进阶标记释义（移动端无 hover，用点击弹出替代 title） */
+  #toast{position:fixed;left:50%;bottom:calc(12% + env(safe-area-inset-bottom));transform:translate(-50%,10px);
+    max-width:86vw;text-align:center;color:#ece4ff;font-size:13.5px;letter-spacing:.05em;line-height:1.6;
+    background:rgba(24,14,48,.94);border:1px solid rgba(180,150,255,.5);border-radius:14px;
+    padding:10px 18px;box-shadow:0 10px 30px rgba(0,0,0,.5);
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+    opacity:0;visibility:hidden;transition:opacity .3s ease, transform .3s ease, visibility .3s;
+    pointer-events:none;z-index:60;}
+  #toast.show{opacity:1;visibility:visible;transform:translate(-50%,0);}
   /* 功能体：三本书菜单（占位原型） */
   #books{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;gap:clamp(24px,5vw,90px);
-    opacity:0;visibility:hidden;transition:opacity 1.1s ease, visibility 1.1s;pointer-events:none;z-index:1;cursor:none;}
-  #books.show{opacity:1;visibility:visible;pointer-events:auto;}
-  .bookWrap{opacity:0;transform:translateY(16px) scale(.97);
+    opacity:0;visibility:hidden;pointer-events:none;z-index:1;cursor:none;
+    /* visibility 是离散属性：显示要瞬时（否则隐着的书会继续吃点击），隐藏要等淡出走完 */
+    transition:opacity 1.1s ease, visibility 0s linear 1.1s;}
+  #books.show{opacity:1;visibility:visible;pointer-events:auto;transition:opacity 1.1s ease, visibility 0s;}
+  .bookWrap{opacity:0;transform:translateY(16px) scale(.97);pointer-events:none;
     transition:opacity 1.4s ease, transform 1.2s cubic-bezier(.2,.8,.2,1);transition-delay:var(--d,0s);}
   #books.show .bookWrap{opacity:1;transform:translateY(0) scale(1);}
+  /* 入场动画跑完（JS 加 .ready）之前一律不可点，避免「书还没显形就能点中」 */
+  #books.ready .bookWrap{pointer-events:auto;}
   .book{width:clamp(118px,13vw,196px);height:clamp(176px,19.5vw,294px);cursor:pointer;position:relative;
     animation:bookFloat 7s ease-in-out infinite;animation-delay:var(--d,0s);
     filter:brightness(.5) saturate(.95) drop-shadow(0 16px 20px rgba(0,0,0,.6));transition:filter .5s ease, transform .5s ease;}
   #books.show .bookWrap:hover .book{filter:brightness(1.02) saturate(1.06) drop-shadow(0 18px 26px rgba(0,0,0,.5));transform:translateY(-6px);}
+  /* 未开放的书：降饱和蒙灰 + 角标，且不参与悬停提亮 */
+  .book.locked{cursor:default;filter:brightness(.30) saturate(.20) drop-shadow(0 12px 18px rgba(0,0,0,.6));}
+  #books.show .bookWrap:hover .book.locked{filter:brightness(.30) saturate(.20) drop-shadow(0 12px 18px rgba(0,0,0,.6));transform:none;}
+  .book .badge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;
+    font-size:11px;letter-spacing:.18em;color:#cfc3ef;background:rgba(14,9,28,.85);
+    border:1px solid rgba(170,150,220,.45);border-radius:14px;padding:3px 11px;white-space:nowrap;pointer-events:none;}
   .book svg{width:100%;height:100%;display:block;}
   .book .label{position:absolute;left:0;right:0;bottom:-30px;text-align:center;color:#dccfff;
     font-size:clamp(13px,1.4vw,18px);letter-spacing:.14em;opacity:0;transition:opacity .6s ease;}
@@ -49,9 +69,10 @@
   #books.show .books-cap{opacity:.85;}
   @keyframes bookFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
   #funcpage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
-    opacity:0;visibility:hidden;transition:opacity .8s ease, visibility .8s;z-index:8;
-    background:radial-gradient(circle at 50% 44%, rgba(22,13,44,.55), rgba(4,3,10,.93));}
-  #funcpage.show{opacity:1;visibility:visible;}
+    opacity:0;visibility:hidden;z-index:8;
+    background:radial-gradient(circle at 50% 44%, rgba(22,13,44,.55), rgba(4,3,10,.93));
+    transition:opacity .8s ease, visibility 0s linear .8s;}
+  #funcpage.show{opacity:1;visibility:visible;transition:opacity .8s ease, visibility 0s;}
   #funcpage h1{color:#ece4ff;font-size:clamp(26px,4vw,52px);letter-spacing:.14em;font-weight:600;margin:0;
     text-shadow:0 0 26px rgba(170,130,255,.6);}
   #funcpage p{color:#b9aee0;font-size:clamp(13px,1.6vw,18px);margin:0;max-width:62vw;text-align:center;line-height:1.75;}
@@ -245,7 +266,10 @@
   .ly-tag.po{color:#efa98d;border-color:rgba(239,169,141,.5);background:rgba(220,120,80,.14);}
   .ly-tag.rc{color:#a99cd4;border-color:rgba(170,150,220,.35);background:rgba(140,120,200,.1);}
   /* 进阶标记 chip */
-  .ly-flag{font-size:10px;padding:1px 6px;border-radius:7px;border:1px solid transparent;white-space:nowrap;cursor:help;}
+  .ly-flag{font-size:10px;padding:2px 8px;border-radius:7px;border:1px solid transparent;white-space:nowrap;
+    cursor:pointer;font-family:inherit;line-height:1.5;background:transparent;-webkit-appearance:none;appearance:none;}
+  .ly-flag:active{transform:scale(.95);}
+  .ly-flag:focus-visible{outline:2px solid #cdb6ff;outline-offset:2px;}
   .ly-flag.good{color:#8fd7b3;border-color:rgba(143,215,179,.5);background:rgba(80,190,140,.14);}
   .ly-flag.bad{color:#efa98d;border-color:rgba(239,169,141,.5);background:rgba(220,120,80,.14);}
   .ly-flag.mid{color:#c3b4f2;border-color:rgba(195,180,242,.42);background:rgba(140,120,200,.13);}
@@ -397,7 +421,7 @@
   @media (max-width: 720px){
     /* 移动端：交还文档级纵向滚动（fixed 全屏层的 overflow 滚动在手机上不可靠） */
     html,body{overflow:hidden; height:100%;}
-    #funcpage{ position:fixed; inset:0; width:100%; height:100%; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior:none; justify-content:flex-start; padding:14px 0 30px; touch-action:pan-y; }
+    #funcpage{ position:fixed; inset:0; width:100%; height:100%; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior:none; justify-content:flex-start; padding:calc(14px + env(safe-area-inset-top)) 0 calc(30px + env(safe-area-inset-bottom)); touch-action:pan-y; }
     #tarotPanel{ width:100vw; max-height:none; height:auto; overflow:visible; padding:10px 10px 18px; gap:12px; align-self:stretch; flex-shrink:0; }
     .tp-controls{ width:100%; gap:10px; }
     .tp-info{ max-width:100%; padding:0 10px; font-size:12px; }
@@ -431,6 +455,25 @@
     .tp-select{ flex:1 1 auto; }
     .tp-select-btn{ width:100%; }
   }
+  /* ===== 移动端单层滚动 + 触控目标（B2/B4）===== */
+  @media (max-width:720px){
+    /* 三面板交还滚动给 #funcpage，消除「面板内滚 + 页面滚」双层 */
+    #baziPanel,#tarotPanel,#liuyaoPanel{ max-height:none; height:auto; overflow:visible; }
+    .bz-lylist{ max-height:none; overflow:visible; }
+    /* 触控目标 ≥44px */
+    .btn{ min-height:44px; padding:10px 18px; }
+    .back{ min-height:44px; }
+    .tp-btn{ min-height:44px; }
+    .tp-select-btn{ min-height:44px; }
+    .bz-lynav button{ min-height:44px; padding:10px 16px; }
+    .bz-field input,.bz-field select,.ly-field input,.ly-field select{ min-height:44px; }
+    /* 四本书必须同屏可点：390px 下原本 4x118 + 3x24 = 544 > 390，首尾两本被挤出屏幕（B8） */
+    #books{ gap:clamp(8px,3.2vw,26px); }
+    .book{ width:clamp(58px,16.5vw,118px); height:clamp(86px,24.6vw,176px); }
+    .book .label{ bottom:-22px; font-size:11.5px; letter-spacing:.06em; }
+    .book .badge{ font-size:9px; padding:2px 7px; letter-spacing:.10em; border-radius:10px; }
+    .books-cap{ font-size:13px; letter-spacing:.22em; }
+  }
   /* 窄屏（小手机）进一步压缩牌宽，保证可横向滑动 */
   @media (max-width: 420px){
     #tarotBoard{ grid-template-columns: repeat(var(--ncols, 3), minmax(132px, 40vw)) !important; }
@@ -448,6 +491,7 @@
 <button id="replay" class="btn" data-page-node-id="97btVLAM8UmFdfWIB6IVja">&#8635; 重播</button>
 <button id="skip" class="btn" data-page-node-id="wuuVciwRrGFHCA5GXUZFuY">跳过引导</button>
 <div id="fallback" data-page-node-id="JTpvt0xaHZB0silBBGTyk5">此预览需要 WebGL 支持。<br data-page-node-id="TtwxMRMRGHJAhUnlnIo4BA"/>请用较新的 Chrome / Edge / Firefox / Safari 打开。</div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <div id="books" data-page-node-id="YIc7jp9QW9UhsOPS1pIIo3">
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" data-page-node-id="nG48IqDyiGWswnNzfLnPyV"><defs data-page-node-id="AHxqMnEU97XSRBAcyUYmlY">
@@ -513,7 +557,7 @@
     </svg>
     <div class="label" data-page-node-id="xFODj28HRXAtUellmRtt9S">八字</div>
   </div></div>
-  <div class="bookWrap" style="--d:.5s" data-page-node-id="7dcAAAS0zlaCOMya8ctdca"><div class="book" data-idx="1" data-page-node-id="5DmiaoyGNVTtUgILkzDnDm">
+  <div class="bookWrap" style="--d:.5s" data-page-node-id="7dcAAAS0zlaCOMya8ctdca"><div class="book locked" data-idx="1" data-page-node-id="5DmiaoyGNVTtUgILkzDnDm"><span class="badge">未开放</span>
       <svg viewBox="0 0 120 180" xmlns="http://www.w3.org/2000/svg" data-page-node-id="e6makwy3Nahg0uPfcr0FME">
       <defs data-page-node-id="nWCb7Uad3RAzXRBUYHqnlw">
         <linearGradient id="cov1" x1="0" y1="0" x2="0.85" y2="1" data-page-node-id="5Q2PUwBL1ClbUynx4B7l7A"><stop offset="0" stop-color="#2c5238" data-page-node-id="5YZ9cBR6lhVw74RMBYrtxH"/><stop offset="0.5" stop-color="#17331f" data-page-node-id="J5K74sZxnq5jmS2ugGmzjd"/><stop offset="1" stop-color="#0d1f14" data-page-node-id="bKCZpL555wW7C3qFDkj3Wx"/></linearGradient>
@@ -992,32 +1036,36 @@ const mouse = { x: -9999, y: -9999, active: false };
 function setMouse(x, y){ mouse.x = x; mouse.y = y; mouse.active = true; }
 window.addEventListener('mousemove', e => setMouse(e.clientX, e.clientY));
 glCanvas.addEventListener('mouseleave', () => mouse.active = false);
-glCanvas.addEventListener('touchstart', e => { const t = e.touches[0]; if (t) setMouse(t.clientX, t.clientY); }, {passive:true});
-glCanvas.addEventListener('touchmove', e => { const t = e.touches[0]; if (t) setMouse(t.clientX, t.clientY); }, {passive:true});
-glCanvas.addEventListener('touchend', () => mouse.active = false);
+// 触摸统一绑在 window：#gl 恒为 pointer-events:none，绑在它上面收不到任何触摸事件
+window.addEventListener('touchstart', e => { const t = e.touches[0]; if (t) setMouse(t.clientX, t.clientY); }, {passive:true});
+window.addEventListener('touchmove',  e => { const t = e.touches[0]; if (t) setMouse(t.clientX, t.clientY); }, {passive:true});
+window.addEventListener('touchend',    () => { mouse.active = false; }, {passive:true});
+window.addEventListener('touchcancel', () => { mouse.active = false; }, {passive:true});
 
 let phase = 'loading', phaseStart = 0;
 function startIntro(){
   phase = 'intro'; phaseStart = performance.now();
   initBallOrbit();
-  glCanvas.style.cursor = 'pointer';
+  document.body.style.cursor = 'pointer';   // #gl 恒为 pointer-events:none，光标须挂 body 才生效
   setTimeout(() => hint.style.opacity = '0.9', reduce ? 300 : 1800);
 }
 function startEnter(){
   if (phase !== 'intro') return;
   phase = 'enter'; phaseStart = performance.now();
+  document.body.style.cursor = '';
   hint.style.opacity = '0';
 }
 function startField(){
   phase = 'field'; phaseStart = performance.now();
-  glCanvas.style.cursor = 'none';
+  document.body.style.cursor = '';   // 书菜单自带 cursor:none，功能页需要正常光标
+  hint.style.opacity = '0';          // 「跳过引导」会直落本阶段，须清掉首屏提示，否则文字常驻压在书/结果页上
   // 注意：不要把 #gl 提到最上层 —— 它的 WebGL 缓冲以不透明黑色 clear，
   // 若 z-index 高于 #books / #ui，会把魔杖与三本书一起盖住（书“看不见”）。
   glCanvas.style.zIndex = '0';
   glCanvas.style.pointerEvents = 'none';
   wand.init = false; lastT = 0;
   initParticles();
-  replay.style.display = 'block';
+  replay.style.display = 'inline-flex';
   skip.style.display = 'none';
   setTimeout(showBooks, 1500);
 }
@@ -1031,7 +1079,8 @@ function replayAll(){
   glCanvas.style.zIndex = '0';
   glCanvas.style.pointerEvents = 'auto';
   started = false; begin();
-  booksEl.classList.remove('show'); document.body.classList.remove('func'); document.body.classList.remove('books'); booksShown = false;
+  funcpage.classList.remove('show'); closeAllPanels();
+  booksEl.classList.remove('show'); booksEl.classList.remove('ready'); document.body.classList.remove('func'); document.body.classList.remove('books'); booksShown = false;
 }
 
 const COLORS = [[185,138,255],[143,192,255],[200,170,255]];
@@ -1355,15 +1404,46 @@ const DESCS = [
   '六爻纳甲 · 三枚铜钱摇六次，装卦排六亲世应，参断旺衰空破。'
 ];
 let booksShown = false;
+// 轻提示：未开放的书 / 进阶标记释义（移动端没有 hover，用点击弹出替代 title）
+const toastEl = document.getElementById('toast');
+let toastTimer = null;
+function showBookNotice(msg){
+  if (!toastEl) return;
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
+}
+// 与 .bookWrap 最大延迟(--d:1.2s) + opacity 1.4s 对齐：在此之前书一律不可点
+const BOOKS_READY_MS = 2700;
+let booksReadyTimer = null;
+function armBooksClickable(){
+  booksEl.classList.remove('ready');
+  clearTimeout(booksReadyTimer);
+  booksReadyTimer = setTimeout(() => booksEl.classList.add('ready'), BOOKS_READY_MS);
+}
 function showBooks(){
-  if (booksShown) return; booksShown = true;
+  if (!booksShown){ booksShown = true; document.body.classList.add('books'); }
   booksEl.classList.add('show');
-  document.body.classList.add('books');
+  armBooksClickable();
+}
+// 面板显隐的唯一入口：把三个功能页一起收起，保证任意入口下「只有一个功能页可见」。
+// 用 getElementById 而非模块常量，避免与下方的声明顺序耦合。
+function closeAllPanels(){
+  ['baziPanel','tarotPanel','liuyaoPanel'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.classList.remove('show');
+  });
+  fpTitle.style.display = '';
+  fpDesc.style.display = '';
 }
 function selectBook(idx){
+  // 未开放的书：只给一次轻提示，不进死页（A3）
+  if (idx === 1){ showBookNotice('「占星」这本书还没上架，敬请期待。'); return; }
+  closeAllPanels();                    // 先全收起：selectBook 必须幂等（B9）
   document.body.classList.add('func');
   document.body.classList.remove('books');
   booksEl.classList.remove('show');
+  booksEl.classList.remove('ready');   // 离开书架即撤销点击许可，不留「看不见却能点」的窗口（B10）
   if(idx === 0){
     fpTitle.style.display = 'none';
     fpDesc.style.display = 'none';
@@ -1380,11 +1460,6 @@ function selectBook(idx){
     liuyaoPanel.classList.add('show');
     lyEnter();
   } else {
-    fpTitle.style.display = '';
-    fpDesc.style.display = '';
-    tarotPanel.classList.remove('show');
-    liuyaoPanel.classList.remove('show');
-    baziPanel.classList.remove('show');
     fpTitle.textContent = NAMES[idx];
     fpDesc.textContent = DESCS[idx];
   }
@@ -1392,14 +1467,11 @@ function selectBook(idx){
 }
 function backToBooks(){
   funcpage.classList.remove('show');
-  tarotPanel.classList.remove('show');
-  baziPanel.classList.remove('show');
-  document.getElementById('liuyaoPanel').classList.remove('show');
-  fpTitle.style.display = '';
-  fpDesc.style.display = '';
+  closeAllPanels();
   document.body.classList.remove('func');
   booksEl.classList.add('show');
   document.body.classList.add('books');
+  armBooksClickable();
 }
 // ===== 八字（书一）逻辑 =====
 const baziPanel = document.getElementById('baziPanel');
@@ -1607,7 +1679,13 @@ const lyProg     = document.getElementById('lyProg');
 const lyTossTxt  = document.getElementById('lyTossTxt');
 const lyToss     = document.getElementById('lyToss');
 const lyResult   = document.getElementById('lyResult');
-const LY_WX = {'木':'#7fc8a9','火':'#e8836b','土':'#d9b26a','金':'#c9c4d8','水':'#7fa8d8'};
+// 进阶标记点击 → 弹释义：移动端唯一可读路径（C4）
+lyResult.addEventListener('click', e => {
+  const b = e.target && e.target.closest ? e.target.closest('.ly-flag') : null;
+  if (!b || !b.dataset) return;
+  showBookNotice((b.dataset.name || '') + '：' + (b.dataset.desc || ''));
+});
+const LY_WX = WX_COLOR;   // 与八字共用同一份五行配色（原为重复硬编码，C8）
 const lyAsk = document.getElementById('lyAsk');
 const lyHex = document.getElementById('lyHex');
 const LY_YAO_SHORT = ['初爻','二爻','三爻','四爻','五爻','上爻'];
@@ -1750,9 +1828,11 @@ function lyEsc(s){
 function lyFlagChips(y){
   const fs = y.flags || [];
   if (!fs.length) return '';
+  // 用 button + data-desc：移动端没有 hover，靠点击弹提示才能读到释义（C4）
   return '<div class="ly-flags">' + fs.map(f =>
-    '<span class="ly-flag ' + (LY_FLAG_TONE[f.code] || 'mid') + '" title="' + lyEsc(f.desc) + '">'
-    + lyEsc(f.name) + '</span>').join('') + '</div>';
+    '<button type="button" class="ly-flag ' + (LY_FLAG_TONE[f.code] || 'mid') + '"'
+      + ' title="' + lyEsc(f.desc) + '" data-name="' + lyEsc(f.name) + '" data-desc="' + lyEsc(f.desc) + '">'
+    + lyEsc(f.name) + '</button>').join('') + '</div>';
 }
 
 function lyYaoRow(y, opt){
