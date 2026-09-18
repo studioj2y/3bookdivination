@@ -1021,6 +1021,7 @@ def compute_liuyao(yao6=None, category='其他', sex=None, dt=None, question=Non
             text = {
                 'name': ben['name'], 'ci': bt['ci'], 'xiang': bt['xiang'],
                 'note': bt.get('note', ''),
+                'plain': bt.get('plain', ''),
                 'yao': bt['yao'],
                 'moving_yao': [y for y in bt['yao'] if y['pos'] in moving_idx],
             }
@@ -1029,6 +1030,7 @@ def compute_liuyao(yao6=None, category='其他', sex=None, dt=None, question=Non
                 if btx:
                     text['bian_name'] = bian['name']
                     text['bian_ci'] = btx['ci']
+                    text['bian_plain'] = btx.get('plain', '')
 
     # 合局 / 刑 / 害由前端独立成卡渲染，此处不并入 struct
     return {

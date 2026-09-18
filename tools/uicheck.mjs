@@ -41,7 +41,11 @@ function send(method, params = {}, ms = 20000){
 async function js(expr){
   const r = await send("Runtime.evaluate", { expression: `(function(){${expr}})()`, returnByValue: true, awaitPromise: true });
   if (r.__t) return "__TIMEOUT__";
-  if (r.result && r.result.exceptionDetails) return "__ERR__";
+  if (r.result && r.result.exceptionDetails){
+    var d = r.result.exceptionDetails, ex = d.exception || {};
+    return "__ERR__: " + String(ex.description || ex.value || d.text || "unknown").split("\n")[0]
+      + " ‖ expr: " + String(expr).replace(/\s+/g, " ").slice(0, 90);
+  }
   return r.result && r.result.result ? r.result.result.value : undefined;
 }
 async function rect(sel){ return js(`var e=document.querySelector(${JSON.stringify(sel)}); if(!e) return null;
@@ -359,13 +363,56 @@ const exp = await js(`var b=JSON.parse(localStorage.getItem('ly_book_v1')||'[]')
 const dom = await js(`var t=document.getElementById('lyResult').textContent;
   return {ss:!!document.querySelector('#lyResult .ly-term[data-term="shensha"]'),
     yq:!!document.querySelector('#lyResult .ly-term[data-term="yingqi"]'),
-    text:t.indexOf('卦爻辞 · 通行本')>=0,
+    text:t.indexOf('卦爻辞 · 周易本经')>=0,
     details:!!document.querySelector('#lyResult details'),
-    yao6:(document.querySelectorAll('#lyResult details .at').length)};`);
+    yao6:(document.querySelectorAll('#lyResult details .ly-pair').length)};`);
 check("新增·第二档卡片按数据到位（神煞/应期/卦爻辞）",
   !!exp && !!dom && dom.ss === exp.ss && dom.yq === exp.yq && dom.text === exp.text
-  && (exp.details ? dom.details && dom.yao6 === 6 : true),
+  && (exp.details ? dom.details && dom.yao6 >= 7 : true),
   "期望 " + JSON.stringify(exp) + " 实际 " + JSON.stringify(dom));
+
+// 5b) 卦爻辞白话层：白话默认可见、原文折叠、标明「本经视角」
+const expT = await js(`var b=JSON.parse(localStorage.getItem('ly_book_v1')||'[]'); var p=b[0]&&b[0].payload;
+  return p&&p.text ? {gua:p.text.plain, y0:(p.text.yao[0]||{}).plain} : null;`);
+const pl = await js(`var c=document.getElementById('lyTextCard'); if(!c) return null;
+  var d=c.querySelector('details');
+  return {badge:((c.querySelector('.ly-badge')||{}).textContent||''),
+    gua:((c.querySelector('.ai .at')||{}).textContent||''),
+    mini:!!c.querySelector('.ly-mini'),
+    pairs:c.querySelectorAll('.ly-pair').length,
+    inD:c.querySelectorAll('details .ly-pair').length,
+    p2:c.querySelectorAll('details .ly-pair .ly-p2').length,
+    open:!!d && d.open};`);
+check("新增·卦爻辞白话默认可见、原文默认折叠、标明本经视角",
+  !!expT && !!pl && pl.badge.indexOf("本经视角") >= 0 && pl.badge.indexOf("非六爻判断") >= 0
+  && pl.gua.length > 20 && !!expT.gua && pl.gua.indexOf(expT.gua.slice(0, 10)) >= 0
+  && pl.open === false && pl.inD >= 7 && pl.p2 >= 6,
+  JSON.stringify({badge:pl&&pl.badge, guaLen:pl&&pl.gua.length, 折叠:pl&&pl.open, 组:pl&&pl.inD, 白话行:pl&&pl.p2})
+  + " 期望卦白话=" + JSON.stringify(expT && expT.gua ? expT.gua.slice(0, 10) : null));
+
+// 5c) 一键复制文本：页面只负责产出字符串，断言在 Node 侧做
+//     （不把中文串与 \n 转义塞进被求值的表达式里——那种写法在 CDP 求值时报过一次
+//      SyntaxError: Invalid or unexpected token，本地/单发验证却正常，故一律避免）
+const cpClick = await clickSel("#lyResult #lyCopy");
+await sleep(500);
+const cpTxt = await js("return String(window.__lyText || '');");
+const cpRef = await js(`var b=JSON.parse(localStorage.getItem('ly_book_v1')||'[]'); var p=(b[0]&&b[0].payload)||{}; var t=p.text||{};
+  return {name:((p.ben||{}).name)||'', gua:t.plain||'', ci:t.ci||'',
+    mv:(t.moving_yao||[]).map(function(m){return m.text;})};`);
+const cp = {
+  click: cpClick, len: String(cpTxt || '').length,
+  name: !!cpRef && !!cpRef.name && cpTxt.indexOf(cpRef.name) >= 0,
+  gua: !!cpRef && cpRef.gua.length > 0 && cpTxt.indexOf(cpRef.gua.slice(0, 10)) >= 0,
+  ci: !!cpRef && cpRef.ci.length > 0 && cpTxt.indexOf(cpRef.ci) >= 0,
+  mv: !!cpRef && cpRef.mv.every(s => cpTxt.indexOf(s) >= 0),
+  sec: cpTxt.indexOf('— 装卦') >= 0 && cpTxt.indexOf('— 用神') >= 0 && cpTxt.indexOf('— 本经') >= 0,
+  noJudge: cpTxt.indexOf('不作吉凶断言') >= 0,
+  // 装卦行 = 以爻位名开头的行（「参断要点」里也有「旺衰」二字，不能只按关键词数）
+  rows: cpTxt.split('\n').filter(s => /^(初爻|二爻|三爻|四爻|五爻|上爻)/.test(s)).length,
+};
+check("新增·一键复制文本（卦体 + 装卦 + 用神 + 本经白话/卦辞/动爻 + 免责说明）",
+  cpClick && cp.len > 400 && cp.name && cp.gua && cp.ci && cp.mv && cp.sec && cp.noJudge && cp.rows === 6,
+  JSON.stringify(cp));
 
 // 6) 占卦本
 const bk = await (async () => {
@@ -407,11 +454,12 @@ const ex = await js(`return (async function(){
     URL.revokeObjectURL(url);
     return {W:W,H:H,png:blob?blob.size:0,svgLen:svg.length,
       hasName:svg.indexOf(p.ben.name)>=0,hasYq:svg.indexOf('应期线索')>=0,
+      hasPlain:svg.indexOf('白话：')>=0,
       hasBoard:svg.indexOf('<svg x=')>=0};
   }catch(e){ return {err:String((e&&e.message)||e)}; }
 })()`);
-check("新增·导出长图 SVG→PNG 全链路可用（含卦盘内嵌）",
-  !!ex && !ex.err && ex.W === 720 && ex.H > 600 && ex.png > 20000 && ex.hasName && ex.hasBoard,
+check("新增·导出长图 SVG→PNG 全链路可用（含卦盘内嵌 + 本经白话）",
+  !!ex && !ex.err && ex.W === 720 && ex.H > 600 && ex.png > 20000 && ex.hasName && ex.hasBoard && ex.hasPlain,
   JSON.stringify(ex));
 await shot("07-liuyao-new-desktop");
 await clickSel("#fpBack"); await sleep(400);
@@ -512,10 +560,17 @@ const mb = await js(`var svg=document.querySelector('#lyResult .ly-board svg'); 
     fits:r.width <= par.width + 1, noOverflow:fp.scrollWidth <= innerWidth + 1,
     chips:document.querySelectorAll('#lyResult .ly-recast[data-cat]').length,
     chipH:cr?Math.round(cr.height):0,
-    bookBtn:!!(rbr && rbr.width>0 && rbr.height>=18 && rbr.right<=innerWidth+1)};`);
-check("新增·手机端卦盘自适应（不溢出、同卦另断 chip 与占卦本入口可点）",
+    bookBtn:!!(rbr && rbr.width>0 && rbr.height>=18 && rbr.right<=innerWidth+1),
+    copyBtn:(function(){var cb=document.getElementById('lyCopy'); if(!cb) return false;
+      var q=cb.getBoundingClientRect(); return q.width>0 && q.height>=18 && q.right<=innerWidth+1;})(),
+    textCard:(function(){var tc=document.getElementById('lyTextCard'); if(!tc) return {ok:false};
+      var q=tc.getBoundingClientRect();
+      return {ok:true, fits:q.right<=innerWidth+1 && q.left>=-1,
+        badge:((tc.querySelector('.ly-badge')||{}).textContent||'')};})()};`);
+check("新增·手机端卦盘自适应（不溢出、同卦另断 chip 与占卦本/复制入口可点）",
   !!mb && mMs > 0 && mb.fits && mb.noOverflow && mb.h > 150
-  && mb.chips === 9 && mb.chipH >= 18 && mb.bookBtn, JSON.stringify(mb));
+  && mb.chips === 9 && mb.chipH >= 18 && mb.bookBtn && mb.copyBtn
+  && mb.textCard.ok && mb.textCard.fits && mb.textCard.badge.indexOf("本经视角") >= 0, JSON.stringify(mb));
 await shot("08-liuyao-new-mobile");
 
 const fail = results.filter(r => !r.pass);

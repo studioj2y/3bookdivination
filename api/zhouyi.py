@@ -6,8 +6,20 @@
   · 纳甲筮法以五行生克、旺衰空破为主，**爻辞仅供参考**，不作断语；
   · 文本取通行本（王弼本），异文、别本从略；
   · 爻题（初九 / 六二 …）随各卦阴阳而定，已随文录入；
-  · 乾坤两卦附「用九 / 用六」。
+  · 乾坤两卦附「用九 / 用六」；
+  · **白话义**在 api/zhouyi_plain.py（由 data/build_zhouyi_plain.py 生成），
+    只是翻译与意象说明，同样不作断语；缺失时本模块自动降级为「只有原文」。
 """
+
+try:
+    import zhouyi_plain as _zp
+except ImportError:                      # 单独拷走本文件时降级：没有白话也能跑
+    try:
+        from . import zhouyi_plain as _zp  # type: ignore
+    except Exception:
+        _zp = None
+
+PLAIN = _zp.PLAIN if _zp else {}
 
 _YAO_NAMES = ('初爻', '二爻', '三爻', '四爻', '五爻', '上爻')
 
@@ -648,17 +660,27 @@ GUA_TEXT = {
 
 
 def gua_text(name):
-    """按卦名取卦辞 / 大象 / 爻辞。未收录返回 None。"""
+    """按卦名取卦辞 / 大象 / 爻辞，并附白话义。未收录返回 None。
+
+    返回结构（新增字段旧调用方不受影响）：
+      {name, ci, xiang, note, yong, plain, plain_ready,
+       yao: [{pos, pos_name, text, plain}]}
+    """
     d = GUA_TEXT.get(name)
     if not d:
         return None
+    p = PLAIN.get(name) or {}
+    pys = p.get('yao') or []
     return {
         'name': name,
         'ci': d['ci'],
         'xiang': d['xiang'],
         'note': d.get('note', ''),
         'yong': d.get('yong', ''),
-        'yao': [{'pos': i, 'pos_name': _YAO_NAMES[i], 'text': t}
+        'plain': p.get('gua', ''),
+        'plain_ready': bool(p.get('gua')),
+        'yao': [{'pos': i, 'pos_name': _YAO_NAMES[i], 'text': t,
+                 'plain': (pys[i] if i < len(pys) else '')}
                 for i, t in enumerate(d['yao'])],
     }
 
@@ -674,6 +696,13 @@ def self_check():
         for key in ('ci', 'xiang'):
             if not v.get(key):
                 problems.append('%s 缺 %s' % (k, key))
+    if PLAIN:
+        miss = [k for k in GUA_TEXT if k not in PLAIN]
+        if miss:
+            problems.append('白话缺 %d 卦：%s' % (len(miss), '、'.join(miss[:5])))
+        for k, v in PLAIN.items():
+            if len(v.get('yao') or []) != 6:
+                problems.append('%s 白话爻数 ≠ 6' % k)
     return problems
 
 

@@ -301,6 +301,14 @@
   /* ===== 六爻：起卦动作行 ===== */
   .ly-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;}
   .ly-btnrow{text-align:center;margin-top:4px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+  .ly-badge{display:inline-block;margin-left:7px;padding:1px 7px;border-radius:9px;font-size:10.5px;font-weight:400;
+    color:#ffd9a8;background:rgba(210,150,60,.16);border:.5px solid rgba(230,170,80,.32);vertical-align:middle;}
+  .ly-mini{color:#9c90c8;font-size:11.5px;}
+  .ly-pair{display:flex;flex-direction:column;gap:3px;padding:6px 0;border-bottom:.5px dashed rgba(150,130,220,.16);}
+  .ly-pair:last-child{border-bottom:none;}
+  .ly-pair .ly-p0{color:#8f83bb;font-size:11.5px;}
+  .ly-pair .ly-p1{color:#cdb6ff;font-size:12.5px;line-height:1.65;}
+  .ly-pair .ly-p2{color:#9c90c8;font-size:11.5px;line-height:1.62;}
   .tp-btn.ghost{background:transparent;border:1px solid rgba(160,130,230,.5);color:#cdb6ff;
     box-shadow:none;font-size:13px;padding:9px 15px;}
   .tp-btn.ghost:hover{background:rgba(150,110,255,.12);}
@@ -2157,6 +2165,123 @@ function lyWrap(text, per){
   return out.length ? out : [''];
 }
 
+// 把一卦拼成一段可直接粘贴的纯文本（零 AI、零联网）——方便发给懂行的人看
+function lyCastText(r){
+  const L = [];
+  const yName = i => { const y = (r.ben.yao || [])[i]; return y ? y.pos_name : ('第' + (i + 1) + '爻'); };
+  L.push('【六爻 · 实卦记录】');
+  L.push('时间：' + (r.time || '—') + '　类别：' + (r.category || '—') + '　性别：' + (r.sex || '—'));
+  if (r.question) L.push('所问：' + r.question);
+  L.push('');
+  L.push('本卦：' + r.ben.name + (r.ben.gong ? '（' + r.ben.gong + '宫）' : '')
+    + (r.moving && r.moving.length ? '　动爻：' + r.moving.map(yName).join('、') : '　（六爻皆静）'));
+  if (r.bian) L.push('变卦：' + r.bian.name);
+  L.push('月建：' + (r.month_zhi || '—') + '月　日辰：' + (r.day_gz || '—')
+    + '　旬空：' + ((r.xunkong || []).join('') || '无'));
+  L.push('');
+  L.push('— 装卦（纳甲 · 按传统固定规则排定，可逐条核对）—');
+  (r.ben.yao || []).forEach(y => {
+    const f = [y.pos_name, y.liuqin, y.ganzhi + ' ' + y.wx];
+    if (y.is_shi) f.push('持世');
+    if (y.is_ying) f.push('应');
+    if (y.liushen) f.push(y.liushen);
+    f.push('旺衰' + y.wang);
+    if (y.is_kong) f.push('旬空');
+    if (y.is_yuepo) f.push('月破');
+    if (y.is_richong) f.push('日冲');
+    if (y.moving) f.push(y.yang ? '动（○）' : '动（×）');
+    const fl = (y.flags || []).map(x => x.name).join('/');
+    if (fl) f.push(fl);
+    L.push(f.join('　'));
+  });
+  if (r.bian && r.bian.yao) {
+    L.push('变卦 ' + r.bian.name + '：' + r.bian.yao.map(y => y.pos_name + y.ganzhi + y.liuqin).join('　'));
+  }
+  L.push('');
+  L.push('— 用神 —');
+  const ys = r.yongshen || {};
+  const hasPos = (ys.pos !== undefined && ys.pos !== null && ys.pos >= 0);
+  L.push('用神（' + (ys.label || '—') + '）' + (ys.name ? ' ' + ys.name : '')
+    + (hasPos ? '　' + yName(ys.pos) + ' ' + (ys.ganzhi || '') : '　本卦无此六亲（详下伏神）'));
+  if (ys.why) L.push('取用理由：' + ys.why);
+  if (ys.reason) L.push('两现取舍：' + ys.reason);
+  (r.fushen || []).forEach(f => {
+    L.push('伏神：' + f.pos_name + ' ' + f.ganzhi + ' ' + f.liuqin
+      + (f.from ? '（伏于' + f.from + '）' : '')
+      + (f.rel_desc ? '　' + f.rel_desc : '')
+      + (f.note ? '；' + f.note : ''));
+  });
+  L.push('');
+  L.push('— 参断要点 —');
+  (r.facts || []).forEach(f => L.push('· ' + f.k + '：' + f.v + (f.d ? '（' + f.d + '）' : '')));
+  (r.struct || []).forEach(s => L.push('· ' + s));
+  if (r.shensha && r.shensha.length) {
+    L.push('');
+    L.push('— 神煞 —');
+    r.shensha.forEach(s => L.push('· ' + s.name + ' ' + s.zhi + '（' + s.from + '）'
+      + ((s.hits || []).length ? '　应于 ' + s.hits.join('、') : '　卦中未见此支')));
+  }
+  if (r.yingqi && r.yingqi.length) {
+    L.push('');
+    L.push('— 应期线索（按值 / 冲 / 合 / 出空 / 冲墓取）—');
+    r.yingqi.forEach(x => L.push('· ' + x.k + '：' + x.v + (x.d ? '（' + x.d + '）' : '')));
+  }
+  const t = r.text || {};
+  if (t.name) {
+    L.push('');
+    L.push('— 本经（周易卦爻辞 · 与装卦并列为两套体系，仅供参考）—');
+    L.push(t.name + '　' + t.ci);
+    if (t.plain) L.push('白话：' + t.plain);
+    if (t.xiang) L.push('大象：' + t.xiang);
+    (t.moving_yao || []).forEach(m => {
+      L.push('动爻 ' + m.pos_name + '　' + m.text);
+      if (m.plain) L.push('　白话：' + m.plain);
+    });
+    if (t.bian_name && t.bian_ci) {
+      L.push('变卦 ' + t.bian_name + '　' + t.bian_ci);
+      if (t.bian_plain) L.push('白话：' + t.bian_plain);
+    }
+  }
+  L.push('');
+  L.push('— 说明 —');
+  L.push('本记录为「装卦 + 事实提取」：纳甲、六亲、世应、六神、旬空月破按传统固定规则排定，可逐条核对；');
+  L.push('进阶标记、神煞与应期只陈述卦中实有的结构关系与推法，不作吉凶断言。');
+  L.push('同样的卦在不同事上、不同的人手里结论可以完全不同。');
+  return L.join('\n');
+}
+
+// 兜底复制（无 https / 无剪贴板权限时用）
+function lyLegacyCopy(txt){
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = txt;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) { return false; }
+}
+
+function lyCopyText(r){
+  const txt = lyCastText(r);
+  window.__lyText = txt;                 // 便于回归脚本核对（也是「复制了什么」的凭据）
+  const done = () => showBookNotice('已复制 ' + txt.length + ' 字，可直接粘贴');
+  const fail = () => showBookNotice('复制失败：请长按选中结果页文字手动复制');
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done, () => (lyLegacyCopy(txt) ? done() : fail()));
+    } else {
+      lyLegacyCopy(txt) ? done() : fail();
+    }
+  } catch (e) {
+    lyLegacyCopy(txt) ? done() : fail();
+  }
+}
+
 function lyCardSVG(r){
   const W = 720, PAD = 30;
   const ys = r.yongshen || {};
@@ -2237,9 +2362,13 @@ function lyCardSVG(r){
 
   const t2 = r.text;
   if (t2){
-    section('卦爻辞（通行本，仅供参考）');
+    section('卦爻辞 · 周易本经（与装卦并列的另一视角）');
     const p1 = para('【' + t2.name + '】' + t2.ci, PAD, y, 46, 12.5, '#ece4ff', 19);
     seg.push(p1.svg); y += p1.h + 19;
+    if (t2.plain){
+      const pz = para('白话：' + t2.plain, PAD, y, 48, 12, '#cdb6ff', 18);
+      seg.push(pz.svg); y += pz.h + 18;
+    }
     const p2 = para('大象：' + t2.xiang, PAD, y, 48, 12, '#b0a4d6', 18);
     seg.push(p2.svg); y += p2.h + 18;
     if (t2.note){
@@ -2249,16 +2378,24 @@ function lyCardSVG(r){
     (t2.moving_yao || []).forEach(m => {
       const p = para('动爻 ' + m.pos_name + '：' + m.text, PAD + 10, y, 44, 12, '#cdb6ff', 18);
       seg.push(p.svg); y += p.h + 18;
+      if (m.plain){
+        const q = para(m.plain, PAD + 20, y, 44, 11.5, '#9c90c8', 17);
+        seg.push(q.svg); y += q.h + 17;
+      }
     });
     if (t2.bian_ci){
       const p = para('【变卦 ' + t2.bian_name + '】' + t2.bian_ci, PAD, y, 46, 12, '#b0a4d6', 18);
       seg.push(p.svg); y += p.h + 18;
+      if (t2.bian_plain){
+        const q = para('白话：' + t2.bian_plain, PAD, y, 48, 11.5, '#9c90c8', 17);
+        seg.push(q.svg); y += q.h + 17;
+      }
     }
     y += 8;
   }
 
   const foot = '装卦与参断均按传统固定规则排定，可逐条核对；进阶标记与应期只陈述卦中实有的结构关系与推法，不作吉凶断言。'
-    + '卦爻辞取通行本，异文从略，仅供参考。';
+    + '卦爻辞取通行本，白话为译文；本经与纳甲为两套体系，并列作参照，不作六爻断语。';
   const pf = para(foot, PAD, y, 52, 11, '#655d85', 17);
   seg.push(pf.svg); y += pf.h + 18;
   y += 24;
@@ -2403,6 +2540,7 @@ function lyCatList(){
 
 function renderLiuyao(r, opt){
   opt = opt || {};
+  window.__lyResult = r;                 // 当前卦局：导出长图 / 复制文本 / 回归脚本共用
   const ys = r.yongshen || {};
   const yongPos = (ys.pos == null) ? -1 : ys.pos;
 
@@ -2521,27 +2659,42 @@ function renderLiuyao(r, opt){
   const t = r.text;
   let textCard = '';
   if (t){
+    const plain = t.plain || '';
     const mv = (t.moving_yao || []).map(m =>
-      '<div class="ai he"><div class="an">动爻 ' + lyEsc(m.pos_name) + '</div>'
-      + '<div class="at">' + lyEsc(m.text) + '</div></div>').join('');
-    const all = (t.yao || []).map(y => '<div class="at">' + lyEsc(y.text) + '</div>').join('');
-    textCard = '<div class="ly-card"><h3>卦爻辞 · 通行本</h3><div class="ly-adv">'
-      + '<div class="ai he"><div class="an">' + lyEsc(t.name) + '</div><div class="at">' + lyEsc(t.ci)
-      + '<br>大象：' + lyEsc(t.xiang) + (t.note ? '<br>象义：' + lyEsc(t.note) : '') + '</div></div>'
+      '<div class="ly-pair"><div class="ly-p0">动爻 ' + lyEsc(m.pos_name) + '</div>'
+      + '<div class="ly-p1">' + lyEsc(m.text) + '</div>'
+      + (m.plain ? '<div class="ly-p2">' + lyEsc(m.plain) + '</div>' : '') + '</div>').join('');
+    const six = (t.yao || []).map(y =>
+      '<div class="ly-pair"><div class="ly-p1">' + lyEsc(y.pos_name) + '：' + lyEsc(y.text) + '</div>'
+      + (y.plain ? '<div class="ly-p2">' + lyEsc(y.plain) + '</div>' : '') + '</div>').join('');
+    textCard = '<div class="ly-card" id="lyTextCard"><h3>卦爻辞 · 周易本经'
+      + '<span class="ly-badge">本经视角 · 非六爻判断</span></h3><div class="ly-adv">'
+      + (plain ? '<div class="ai he"><div class="an">' + lyEsc(t.name) + ' · 白话</div><div class="at">'
+          + lyEsc(plain) + (t.note ? '<br><span class="ly-mini">象义：' + lyEsc(t.note) + '</span>' : '')
+          + '</div></div>' : '')
       + mv
-      + (t.bian_ci ? '<div class="ai"><div class="an">变卦 ' + lyEsc(t.bian_name) + '</div><div class="at">'
-          + lyEsc(t.bian_ci) + '</div></div>' : '')
-      + (t.yong ? '<div class="ai"><div class="an">' + lyEsc(t.yong) + '</div></div>' : '')
-      + '<details><summary style="cursor:pointer;color:#b0a4d6;font-size:12.5px">展开本卦六爻爻辞</summary>'
-      + '<div style="margin-top:7px;display:flex;flex-direction:column;gap:5px">' + all + '</div></details>'
+      + (t.bian_plain ? '<div class="ai"><div class="an">变卦 ' + lyEsc(t.bian_name) + ' · 白话</div><div class="at">'
+          + lyEsc(t.bian_plain) + '</div></div>'
+        : (t.bian_ci ? '<div class="ai"><div class="an">变卦 ' + lyEsc(t.bian_name) + '</div><div class="at">'
+          + lyEsc(t.bian_ci) + '</div></div>' : ''))
+      + '<details><summary style="cursor:pointer;color:#b0a4d6;font-size:12.5px">展开原文（卦辞 · 大象 · 象义 · 六爻爻辞对照白话）</summary>'
+      + '<div style="margin-top:7px;display:flex;flex-direction:column;gap:5px">'
+      + '<div class="ly-pair"><div class="ly-p1">卦辞：' + lyEsc(t.ci) + '</div>'
+      + '<div class="ly-p2">大象：' + lyEsc(t.xiang) + (t.note ? '<br>象义：' + lyEsc(t.note) : '') + '</div></div>'
+      + (t.yong ? '<div class="ly-pair"><div class="ly-p1">' + lyEsc(t.yong) + '</div></div>' : '')
+      + six
+      + (t.bian_ci ? '<div class="ly-pair"><div class="ly-p1">变卦 ' + lyEsc(t.bian_name) + '：' + lyEsc(t.bian_ci) + '</div></div>' : '')
+      + '</div></details>'
       + '</div><div class="fd" style="color:#8f83bb;font-size:11.5px;margin-top:8px">'
-      + '纳甲筮法以五行生克为主，爻辞仅供参考；文本取通行本，异文从略。</div></div>';
+      + '白话只是把本经译成人话。<b>周易本经与纳甲筮法是两套体系</b>：上面「装卦」以用神、六亲、旺衰空破为主，'
+      + '本经这几句不作六爻的断语，只作另一视角参照。文本取通行本，异文从略。</div></div>';
   }
 
   const btn = '<div class="ly-btnrow">' +
     '<button class="tp-btn" id="lyAgain" type="button">↻ 再摇一卦</button>' +
     '<button class="tp-btn" id="lyBack" type="button">换个问题</button>' +
     '<button class="tp-btn ghost" id="lySave" type="button">🖼 导出长图</button>' +
+    '<button class="tp-btn ghost" id="lyCopy" type="button">📋 复制文本</button>' +
     '<button class="tp-btn ghost" id="lyBookR" type="button" data-lybook>📖 占卦本</button></div>';
 
   lyResult.innerHTML = head +
@@ -2565,6 +2718,8 @@ function renderLiuyao(r, opt){
   if (back) back.onclick = () => { lyEnter(); };
   const save = document.getElementById('lySave');
   if (save) save.onclick = () => lyExportPNG(r);
+  const cp = document.getElementById('lyCopy');
+  if (cp) cp.onclick = () => lyCopyText(r);
 }
 
 // ===== 塔罗（书三）逻辑 =====
